@@ -1,0 +1,34 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-body">
+      <h1 class="card-title mb-4"><%= job.title %></h1>
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h5>Budget</h5>
+          <p class="text-primary fw-bold">$<%= job.budget %></p>
+          <h5>Posted By</h5>
+          <p><%= job.client_name %></p>
+        </div>
+        <div class="col-md-6">
+          <h5>Deadline</h5>
+          <p><%= new Date(job.deadline).toLocaleDateString() %></p>
+
+          <h5>Status</h5>
+          <p><span class="badge bg-success"><%= job.status %></span></p>
+        </div>
+      </div>
+      <h5>Description</h5>
+      <p class="mb-4"><%= job.description %></p>
+
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <% if (locals.userType === 'freelancer' && job.status === 'open') { %>
+        <a href="/job/<%= job.id %>/bid" class="btn btn-primary">Place Bid</a>
+        <% } %>
+        <a href="/jobs" class="btn btn-outline-secondary">Back to Jobs</a>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

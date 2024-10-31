@@ -1,0 +1,28 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <h1 class="mb-4">Available Freelancers</h1>
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    <% freelancers.forEach(function(freelancer) { %>
+    <div class="col">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><%= freelancer.name %></h5>
+          <p class="card-text"><%= freelancer.bio %></p>
+          <p class="card-text">
+            <small class="text-muted">Skills: <%= freelancer.skills %></small>
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-top-0">
+          <a
+            href="/freelancer/<%= freelancer.id %>"
+            class="btn btn-primary btn-sm"
+            >View Profile</a
+          >
+        </div>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+</div>
+<%- include('_footer') %>

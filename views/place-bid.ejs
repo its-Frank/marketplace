@@ -1,0 +1,47 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Place a Bid</h2>
+          <h5 class="text-muted mb-4"><%= job.title %></h5>
+          <form action="/job/<%= job.id %>/bid" method="POST">
+            <div class="mb-3">
+              <label for="amount" class="form-label">Bid Amount ($)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="amount"
+                name="amount"
+                min="1"
+                max="<%= job.budget %>"
+                required
+              />
+              <div class="form-text">Maximum budget: $<%= job.budget %></div>
+            </div>
+            <div class="mb-3">
+              <label for="proposal" class="form-label">Proposal</label>
+              <textarea
+                class="form-control"
+                id="proposal"
+                name="proposal"
+                rows="6"
+                placeholder="Explain why you're the best fit for this job..."
+                required
+              ></textarea>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">Submit Bid</button>
+              <a href="/job/<%= job.id %>" class="btn btn-outline-secondary"
+                >Cancel</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

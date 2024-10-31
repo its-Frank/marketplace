@@ -1,0 +1,61 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <h1 class="mb-4">Welcome, <%= user.name %></h1>
+
+  <% if (successMessage) { %>
+  <div class="alert alert-success" role="alert"><%= successMessage %></div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Profile</h5>
+          <p class="card-text">Email: <%= user.email %></p>
+          <a href="/client/edit-profile" class="btn btn-primary btn-sm"
+            >Edit Profile</a
+          >
+        </div>
+      </div>
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Post a New Job</h5>
+          <a href="/job/create" class="btn btn-success btn-sm">Create Job</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Active Jobs</h5>
+          <ul class="list-group list-group-flush">
+            <!-- This part would be populated dynamically with actual job data -->
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              Web Development Project
+              <span class="badge bg-primary rounded-pill">5 bids</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Completed Jobs</h5>
+          <ul class="list-group list-group-flush">
+            <!-- This part would be populated dynamically with actual job data -->
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              Logo Design
+              <span class="badge bg-success rounded-pill">Completed</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('_footer') %>

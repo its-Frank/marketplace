@@ -1,0 +1,40 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <h1 class="mb-4">Available Jobs</h1>
+  <div class="row row-cols-1 row-cols-md-2 g-4">
+    <% jobs.forEach(function(job) { %>
+    <div class="col">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><%= job.title %></h5>
+          <p class="card-text"><%= job.description.substring(0, 150) %>...</p>
+          <p class="card-text">
+            <small class="text-muted">Budget: $<%= job.budget %></small>
+          </p>
+          <p class="card-text">
+            <small class="text-muted"
+              >Deadline: <%= new Date(job.deadline).toLocaleDateString()
+              %></small
+            >
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-top-0">
+          <a href="/job/<%= job.id %>" class="btn btn-primary btn-sm"
+            >View Details</a
+          >
+          <% if (locals.userType === 'freelancer') { %>
+          <a
+            href="/job/<%= job.id %>/bid"
+            class="btn btn-outline-primary btn-sm"
+            >Place Bid</a
+          >
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+</div>
+
+<%- include('_footer') %>

@@ -1,0 +1,39 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <h2 class="mb-4">Messages</h2>
+  <div class="card shadow">
+    <div class="card-body">
+      <% if (messages.length > 0) { %>
+      <div class="list-group">
+        <% messages.forEach(function(message) { %>
+        <div class="list-group-item">
+          <div class="d-flex w-100 justify-content-between">
+            <h6 class="mb-1">
+              <%= message.sender_id === currentUser.id ? 'To: ' +
+              message.receiver_name : 'From: ' + message.sender_name %>
+            </h6>
+            <small class="text-muted">
+              <%= new Date(message.created_at).toLocaleString() %>
+            </small>
+          </div>
+          <% if (message.job_title) { %>
+          <p class="mb-1">
+            <small class="text-muted">Re: <%= message.job_title %></small>
+          </p>
+          <% } %>
+          <p class="mb-1"><%= message.content %></p>
+          <% if (!message.is_read && message.receiver_id === currentUser.id) {
+          %>
+          <span class="badge bg-primary">New</span>
+          <% } %>
+        </div>
+        <% }); %>
+      </div>
+      <% } else { %>
+      <p class="text-center text-muted">No messages yet</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

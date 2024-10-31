@@ -1,0 +1,70 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header">
+          <h2 class="mb-0">Edit Profile</h2>
+        </div>
+        <div class="card-body">
+          <% if (successMessage) { %>
+          <div class="alert alert-success" role="alert">
+            <%= successMessage %>
+          </div>
+          <% } %>
+
+          <form action="/edit-profile" method="POST">
+            <div class="mb-3">
+              <label for="bio" class="form-label">Bio</label>
+              <textarea
+                class="form-control"
+                id="bio"
+                name="bio"
+                rows="4"
+                placeholder="Tell us about yourself..."
+              >
+<%= user.bio || '' %></textarea
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="skills" class="form-label"
+                >Skills (comma-separated)</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="skills"
+                name="skills"
+                value="<%= user.skills || '' %>"
+                placeholder="e.g. Web Development, Graphic Design, Content Writing"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="location" class="form-label">Location</label>
+              <input
+                type="text"
+                class="form-control"
+                id="location"
+                name="location"
+                value="<%= user.location || '' %>"
+                placeholder="e.g. Nairobi, Kenya"
+              />
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                Update Profile
+              </button>
+              <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('_footer') %>

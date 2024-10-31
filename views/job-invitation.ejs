@@ -1,0 +1,48 @@
+<%- include('_header') %>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            Invite <%= freelancer.name %> to a Job
+          </h2>
+          <form action="/jobs/invite/<%= freelancerId %>" method="POST">
+            <div class="mb-3">
+              <label for="jobId" class="form-label">Select Job</label>
+              <select class="form-select" id="jobId" name="jobId" required>
+                <option value="">Choose a job...</option>
+                <% jobs.forEach(function(job) { %>
+                <option value="<%= job.id %>"><%= job.title %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="message" class="form-label"
+                >Additional Message (Optional)</label
+              >
+              <textarea
+                class="form-control"
+                id="message"
+                name="message"
+                rows="4"
+                placeholder="Add a personal note to your invitation..."
+              ></textarea>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                Send Invitation
+              </button>
+              <a
+                href="/freelancer/<%= freelancerId %>"
+                class="btn btn-outline-secondary"
+                >Cancel</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

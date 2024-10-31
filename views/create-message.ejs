@@ -1,0 +1,36 @@
+<%- include('_header') %>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Send Message to <%= receiver.name %></h2>
+          <form action="/messages/create/<%= receiverId %>" method="POST">
+            <div class="mb-3">
+              <label for="content" class="form-label">Message</label>
+              <textarea
+                class="form-control"
+                id="content"
+                name="content"
+                rows="5"
+                required
+                placeholder="Type your message here..."
+              ></textarea>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                Send Message
+              </button>
+              <a
+                href="/freelancer/<%= receiverId %>"
+                class="btn btn-outline-secondary"
+                >Cancel</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

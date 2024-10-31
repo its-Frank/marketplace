@@ -1,0 +1,50 @@
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <h1 class="mb-4">Create a New Job</h1>
+  <form action="/job/create" method="POST">
+    <div class="mb-3">
+      <label for="title" class="form-label">Job Title</label>
+      <input
+        type="text"
+        class="form-control"
+        id="title"
+        name="title"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Job Description</label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="5"
+        required
+      ></textarea>
+    </div>
+    <div class="mb-3">
+      <label for="budget" class="form-label">Budget (in KES)</label>
+      <input
+        type="number"
+        class="form-control"
+        id="budget"
+        name="budget"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label for="deadline" class="form-label">Deadline</label>
+      <input
+        type="date"
+        class="form-control"
+        id="deadline"
+        name="deadline"
+        required
+      />
+    </div>
+    <button type="submit" class="btn btn-success">Create Job</button>
+  </form>
+</div>
+
+<%- include('_footer') %>
