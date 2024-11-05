@@ -1,0 +1,50 @@
+<!-- views/reply-message.ejs -->
+<%- include('_header') %>
+
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-body">
+      <h4 class="card-title mb-4">Reply to Message</h4>
+
+      <!-- Original Message -->
+      <div class="card bg-light mb-4">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            Original message from <%= originalMessage.sender_name %>
+          </h6>
+          <% if (originalMessage.job_title) { %>
+          <p class="mb-2">
+            <small class="text-muted"
+              >Re: <%= originalMessage.job_title %></small
+            >
+          </p>
+          <% } %>
+          <p class="card-text"><%= originalMessage.content %></p>
+          <small class="text-muted">
+            <%= new Date(originalMessage.created_at).toLocaleString() %>
+          </small>
+        </div>
+      </div>
+
+      <!-- Reply Form -->
+      <form action="/messages/reply/<%= originalMessage.id %>" method="POST">
+        <div class="mb-3">
+          <label for="content" class="form-label">Your Reply</label>
+          <textarea
+            class="form-control"
+            id="content"
+            name="content"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+        <div class="d-flex justify-content-between">
+          <a href="/messages" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Send Reply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('_footer') %>

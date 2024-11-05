@@ -1,5 +1,4 @@
 <%- include('_header') %>
-
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-md-8">
@@ -7,7 +6,11 @@
         <div class="card-body">
           <h2 class="card-title mb-4">Place a Bid</h2>
           <h5 class="text-muted mb-4"><%= job.title %></h5>
-          <form action="/job/<%= job.id %>/bid" method="POST">
+          <form
+            action="/job/<%= job.id %>/bid"
+            method="POST"
+            enctype="multipart/form-data"
+          >
             <div class="mb-3">
               <label for="amount" class="form-label">Bid Amount ($)</label>
               <input
@@ -22,6 +25,21 @@
               <div class="form-text">Maximum budget: $<%= job.budget %></div>
             </div>
             <div class="mb-3">
+              <label for="delivery_time" class="form-label"
+                >Delivery Time (days)</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="delivery_time"
+                name="delivery_time"
+                min="1"
+                max="365"
+                required
+              />
+              <div class="form-text">Estimated time to complete the job</div>
+            </div>
+            <div class="mb-3">
               <label for="proposal" class="form-label">Proposal</label>
               <textarea
                 class="form-control"
@@ -31,6 +49,22 @@
                 placeholder="Explain why you're the best fit for this job..."
                 required
               ></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="proposal_file" class="form-label"
+                >Supporting Documents</label
+              >
+              <input
+                type="file"
+                class="form-control"
+                id="proposal_file"
+                name="proposal_file"
+                accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+              />
+              <div class="form-text">
+                Upload any relevant documents (max 10MB). Accepted formats: PDF,
+                DOC, DOCX, TXT, ZIP, RAR
+              </div>
             </div>
             <div class="d-grid gap-2">
               <button type="submit" class="btn btn-primary">Submit Bid</button>

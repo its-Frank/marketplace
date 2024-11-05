@@ -86,3 +86,42 @@ CREATE TABLE payments (
     FOREIGN KEY (client_id) REFERENCES users(id),
     FOREIGN KEY (freelancer_id) REFERENCES users(id)
 );
+
+-- job-images
+CREATE TABLE job_images (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (job_id) REFERENCES jobs(id)
+);
+
+-- bid-attachments
+CREATE TABLE bid_attachments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bid_id INT NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (bid_id) REFERENCES bids(id)
+);
+
+
+-- updates
+ALTER TABLE jobs 
+    ADD COLUMN basic_price DECIMAL(10,2),
+    ADD COLUMN basic_description TEXT,
+    ADD COLUMN basic_delivery INT,
+    ADD COLUMN basic_revisions INT,
+    ADD COLUMN standard_price DECIMAL(10,2),
+    ADD COLUMN standard_description TEXT,
+    ADD COLUMN standard_delivery INT,
+    ADD COLUMN standard_revisions INT,
+    ADD COLUMN premium_price DECIMAL(10,2),
+    ADD COLUMN premium_description TEXT,
+    ADD COLUMN premium_delivery INT,
+    ADD COLUMN premium_revisions INT;
+
+
+ALTER TABLE bids
+    ADD COLUMN delivery_time INT NOT NULL,
+    ADD COLUMN proposal_file VARCHAR(255);

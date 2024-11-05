@@ -1,12 +1,9 @@
 <%- include('_header') %>
-
 <div class="container mt-5">
   <h1 class="mb-4">Welcome, <%= user.name %></h1>
-
   <% if (successMessage) { %>
   <div class="alert alert-success" role="alert"><%= successMessage %></div>
   <% } %>
-
   <div class="row">
     <div class="col-md-4">
       <div class="card mb-4 shadow-sm">
@@ -29,33 +26,108 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-body">
           <h5 class="card-title">Active Jobs</h5>
-          <ul class="list-group list-group-flush">
-            <!-- This part would be populated dynamically with actual job data -->
-            <li
-              class="list-group-item d-flex justify-content-between align-items-center"
-            >
-              Web Development Project
-              <span class="badge bg-primary rounded-pill">5 bids</span>
-            </li>
-          </ul>
+          <% if (activeJobs && activeJobs.length > 0) { %> <%
+          activeJobs.forEach(function(job) { %>
+          <div class="card mb-3">
+            <div class="card-body">
+              <h6 class="card-title d-flex justify-content-between">
+                <%= job.title %>
+                <span
+                  class="badge <%= job.status === 'open' ? 'bg-primary' : 'bg-info' %>"
+                >
+                  <%= job.status === 'open' ? 'Open' : 'In Progress' %>
+                </span>
+              </h6>
+              <p class="card-text"><small>Budget: $<%= job.budget %></small></p>
+              <!-- Bids Section -->
+              <div class="mt-3">
+                <h6>Bids (<%= job.bids.length %>)</h6>
+                <% if (job.bids.length > 0) { %> <%
+                job.bids.forEach(function(bid) { %>
+                <div class="card mb-2">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                      <%= bid.freelancer_name %>
+                      <span
+                        class="badge <%= bid.status === 'pending' ? 'bg-warning' : (bid.status === 'accepted' ? 'bg-success' : 'bg-danger') %>"
+                      >
+                        <%= bid.status %>
+                      </span>
+                    </h6>
+                    <p class="card-text">
+                      <small>Bid Amount: $<%= bid.amount %></small><br />
+                      <small
+                        >Delivery Time: <%= bid.delivery_time %> days</small
+                      >
+                    </p>
+                    <p class="card-text"><%= bid.proposal %></p>
+
+                    <% if (bid.status === 'pending') { %>
+                    <!-- Accept Bid Form -->
+                    <form
+                      action="/bids/<%= bid.id %>/accept"
+                      method="POST"
+                      class="mb-2"
+                    >
+                      <div class="form-group mb-2">
+                        <textarea
+                          name="requirements"
+                          class="form-control"
+                          placeholder="Enter job requirements and instructions"
+                          required
+                        ></textarea>
+                      </div>
+                      <button type="submit" class="btn btn-success btn-sm">
+                        Accept Bid
+                      </button>
+                    </form>
+                    <!-- Reject Bid Form -->
+                    <form action="/bids/<%= bid.id %>/reject" method="POST">
+                      <div class="form-group mb-2">
+                        <input
+                          type="text"
+                          name="reason"
+                          class="form-control"
+                          placeholder="Reason for rejection (optional)"
+                        />
+                      </div>
+                      <button type="submit" class="btn btn-danger btn-sm">
+                        Reject Bid
+                      </button>
+                    </form>
+                    <% } %>
+                  </div>
+                </div>
+                <% }); %> <% } else { %>
+                <p class="text-muted">No bids yet</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <% }); %> <% } else { %>
+          <p class="text-muted">No active jobs</p>
+          <% } %>
         </div>
       </div>
       <div class="card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">Completed Jobs</h5>
-          <ul class="list-group list-group-flush">
-            <!-- This part would be populated dynamically with actual job data -->
-            <li
-              class="list-group-item d-flex justify-content-between align-items-center"
+          <% if (completedJobs && completedJobs.length > 0) { %> <%
+          completedJobs.forEach(function(job) { %>
+          <div class="list-group-item">
+            <h6 class="mb-1"><%= job.title %></h6>
+            <p class="mb-1">Budget: $<%= job.budget %></p>
+            <small class="text-muted"
+              >Completed on: <%= new Date(job.updated_at).toLocaleDateString()
+              %></small
             >
-              Logo Design
-              <span class="badge bg-success rounded-pill">Completed</span>
-            </li>
-          </ul>
+          </div>
+          <% }); %> <% } else { %>
+          <p class="text-muted">No completed jobs</p>
+          <% } %>
         </div>
       </div>
     </div>
   </div>
 </div>
-
 <%- include('_footer') %>

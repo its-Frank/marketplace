@@ -1,8 +1,7 @@
 <%- include('_header') %>
-
 <div class="container mt-5">
   <h1 class="mb-4">Create a New Job</h1>
-  <form action="/job/create" method="POST">
+  <form action="/job/create" method="POST" enctype="multipart/form-data">
     <div class="mb-3">
       <label for="title" class="form-label">Job Title</label>
       <input
@@ -11,6 +10,7 @@
         id="title"
         name="title"
         required
+        placeholder="Enter a clear and concise job title"
       />
     </div>
     <div class="mb-3">
@@ -21,20 +21,187 @@
         name="description"
         rows="5"
         required
+        placeholder="Provide detailed information about your job, requirements, and expectations"
       ></textarea>
     </div>
+    <h3 class="mb-4">Pricing Packages</h3>
+    <div class="row">
+      <!-- Basic Package -->
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Basic Package</h5>
+            <div class="mb-2">
+              <label for="basic_price" class="form-label">Price (KES)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="basic_price"
+                name="basic_price"
+                placeholder="Basic package price"
+              />
+            </div>
+            <div class="mb-2">
+              <label for="basic_description" class="form-label"
+                >Package Description</label
+              >
+              <textarea
+                class="form-control"
+                id="basic_description"
+                name="basic_description"
+                rows="3"
+                placeholder="What's included in the basic package"
+              ></textarea>
+            </div>
+            <div class="mb-2">
+              <label for="basic_delivery" class="form-label"
+                >Delivery Time (Days)</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="basic_delivery"
+                name="basic_delivery"
+                placeholder="Delivery time"
+              />
+            </div>
+            <div class="mb-2">
+              <label for="basic_revisions" class="form-label"
+                >Number of Revisions</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="basic_revisions"
+                name="basic_revisions"
+                placeholder="Number of free revisions"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Standard Package -->
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Standard Package</h5>
+            <div class="mb-2">
+              <label for="standard_price" class="form-label">Price (KES)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="standard_price"
+                name="standard_price"
+                placeholder="Standard package price"
+              />
+            </div>
+            <div class="mb-2">
+              <label for="standard_description" class="form-label"
+                >Package Description</label
+              >
+              <textarea
+                class="form-control"
+                id="standard_description"
+                name="standard_description"
+                rows="3"
+                placeholder="What's included in the standard package"
+              ></textarea>
+            </div>
+            <div class="mb-2">
+              <label for="standard_delivery" class="form-label"
+                >Delivery Time (Days)</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="standard_delivery"
+                name="standard_delivery"
+                placeholder="Delivery time"
+              />
+            </div>
+            <div class="mb-2">
+              <label for="standard_revisions" class="form-label"
+                >Number of Revisions</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="standard_revisions"
+                name="standard_revisions"
+                placeholder="Number of free revisions"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Premium Package -->
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Premium Package</h5>
+            <div class="mb-2">
+              <label for="premium_price" class="form-label">Price (KES)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="premium_price"
+                name="premium_price"
+                placeholder="Premium package price"
+              />
+            </div>
+            <div class="mb-2">
+              <label for="premium_description" class="form-label"
+                >Package Description</label
+              >
+              <textarea
+                class="form-control"
+                id="premium_description"
+                name="premium_description"
+                rows="3"
+                placeholder="What's included in the premium package"
+              ></textarea>
+            </div>
+            <div class="mb-2">
+              <label for="premium_delivery" class="form-label"
+                >Delivery Time (Days)</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="premium_delivery"
+                name="premium_delivery"
+                placeholder="Delivery time"
+              />
+            </div>
+            <div class="mb-2">
+              <label for="premium_revisions" class="form-label"
+                >Number of Revisions</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="premium_revisions"
+                name="premium_revisions"
+                placeholder="Number of free revisions"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="mb-3">
-      <label for="budget" class="form-label">Budget (in KES)</label>
+      <label for="budget" class="form-label">Overall Job Budget (in KES)</label>
       <input
         type="number"
         class="form-control"
         id="budget"
         name="budget"
         required
+        placeholder="Total budget for the job"
       />
     </div>
     <div class="mb-3">
-      <label for="deadline" class="form-label">Deadline</label>
+      <label for="deadline" class="form-label">Job Deadline</label>
       <input
         type="date"
         class="form-control"
@@ -43,8 +210,23 @@
         required
       />
     </div>
-    <button type="submit" class="btn btn-success">Create Job</button>
+    <div class="mb-3">
+      <label for="gig_images" class="form-label">Gig Images</label>
+      <input
+        type="file"
+        class="form-control"
+        id="gig_images"
+        name="gig_images"
+        multiple
+        accept="image/*"
+      />
+      <small class="form-text text-muted">
+        Upload up to 3 images to showcase your job (PNG, JPG, JPEG)
+      </small>
+    </div>
+    <button type="submit" class="btn btn-success btn-lg w-100">
+      Create Job
+    </button>
   </form>
 </div>
-
 <%- include('_footer') %>

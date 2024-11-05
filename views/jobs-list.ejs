@@ -1,11 +1,50 @@
 <%- include('_header') %>
-
 <div class="container mt-5">
   <h1 class="mb-4">Available Jobs</h1>
   <div class="row row-cols-1 row-cols-md-2 g-4">
     <% jobs.forEach(function(job) { %>
     <div class="col">
       <div class="card h-100 shadow-sm">
+        <% if (job.images && job.images.length > 0) { %>
+        <div
+          id="carousel-<%= job.id %>"
+          class="carousel slide"
+          data-bs-ride="carousel"
+        >
+          <div class="carousel-inner">
+            <% job.images.forEach((image, index) => { %>
+            <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+              <img
+                src="<%= image %>"
+                class="d-block w-100"
+                alt="Job Image"
+                style="height: 200px; object-fit: cover"
+              />
+            </div>
+            <% }); %>
+          </div>
+          <% if (job.images.length > 1) { %>
+          <button
+            class="carousel-control-prev"
+            type="button"
+            data-bs-target="#carousel-<%= job.id %>"
+            data-bs-slide="prev"
+          >
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button
+            class="carousel-control-next"
+            type="button"
+            data-bs-target="#carousel-<%= job.id %>"
+            data-bs-slide="next"
+          >
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+          <% } %>
+        </div>
+        <% } %>
         <div class="card-body">
           <h5 class="card-title"><%= job.title %></h5>
           <p class="card-text"><%= job.description.substring(0, 150) %>...</p>
@@ -13,10 +52,9 @@
             <small class="text-muted">Budget: $<%= job.budget %></small>
           </p>
           <p class="card-text">
-            <small class="text-muted"
-              >Deadline: <%= new Date(job.deadline).toLocaleDateString()
-              %></small
-            >
+            <small class="text-muted">
+              Deadline: <%= new Date(job.deadline).toLocaleDateString() %>
+            </small>
           </p>
         </div>
         <div class="card-footer bg-transparent border-top-0">
@@ -36,5 +74,4 @@
     <% }); %>
   </div>
 </div>
-
 <%- include('_footer') %>

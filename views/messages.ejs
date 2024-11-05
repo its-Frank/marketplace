@@ -1,5 +1,4 @@
 <%- include('_header') %>
-
 <div class="container mt-5">
   <h2 class="mb-4">Messages</h2>
   <div class="card shadow">
@@ -7,7 +6,7 @@
       <% if (messages.length > 0) { %>
       <div class="list-group">
         <% messages.forEach(function(message) { %>
-        <div class="list-group-item">
+        <div class="list-group-item" id="message-<%= message.id %>">
           <div class="d-flex w-100 justify-content-between">
             <h6 class="mb-1">
               <%= message.sender_id === currentUser.id ? 'To: ' +
@@ -23,10 +22,32 @@
           </p>
           <% } %>
           <p class="mb-1"><%= message.content %></p>
-          <% if (!message.is_read && message.receiver_id === currentUser.id) {
-          %>
-          <span class="badge bg-primary">New</span>
-          <% } %>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+              <% if (!message.is_read && message.receiver_id === currentUser.id)
+              { %>
+              <span class="badge bg-primary message-status">New</span>
+              <% } %>
+            </div>
+            <div class="btn-group">
+              <% if (message.receiver_id === currentUser.id && !message.is_read)
+              { %>
+              <button
+                class="btn btn-sm btn-outline-secondary mark-read"
+                data-message-id="<%= message.id %>"
+              >
+                Mark as Read
+              </button>
+              <% } %> <% if (message.sender_id !== currentUser.id) { %>
+              <a
+                href="/messages/reply/<%= message.id %>"
+                class="btn btn-sm btn-primary ms-2"
+              >
+                Reply
+              </a>
+              <% } %>
+            </div>
+          </div>
         </div>
         <% }); %>
       </div>
@@ -36,4 +57,34 @@
     </div>
   </div>
 </div>
+<!-- Add this script at the bottom of the page -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add click handlers for mark as read buttons
+    document.querySelectorAll(".mark-read").forEach((button) => {
+      button.addEventListener("click", function () {
+        const messageId = this.dataset.messageId;
+        fetch(`/messages/mark-read/${messageId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Remove the "New" badge and the mark as read button
+              const messageElement = document.querySelector(
+                `#message-${messageId}`
+              );
+              messageElement.querySelector(".message-status").remove();
+              this.remove();
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+  });
+</script>
+
 <%- include('_footer') %>
