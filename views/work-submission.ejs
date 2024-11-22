@@ -1,0 +1,48 @@
+<!-- work-submission.ejs -->
+<%- include('_header') %>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body">
+          <h2 class="card-title">Submit Work for <%= job.title %></h2>
+          <form
+            action="/jobs/<%= job.id %>/submit"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            <div class="mb-3">
+              <label for="submission_text" class="form-label"
+                >Work Description</label
+              >
+              <textarea
+                class="form-control"
+                id="submission_text"
+                name="submission_text"
+                rows="5"
+                required
+                placeholder="Describe the work you've completed..."
+              ></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="work_files" class="form-label"
+                >Attach Files (Optional)</label
+              >
+              <input
+                type="file"
+                class="form-control"
+                id="work_files"
+                name="work_files"
+                multiple
+                accept=".pdf,.doc,.docx,.zip,.rar,.txt,.jpg,.jpeg,.png"
+              />
+              <div class="form-text">You can upload up to 5 files</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Work</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

@@ -105,6 +105,79 @@ CREATE TABLE bid_attachments (
     FOREIGN KEY (bid_id) REFERENCES bids(id)
 );
 
+-- Services table
+CREATE TABLE services (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    seller_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    image_path VARCHAR(255),
+    status ENUM('available', 'pending', 'sold') DEFAULT 'available',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (seller_id) REFERENCES users(id)
+);
+
+-- Service messages table for negotiations
+CREATE TABLE service_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    service_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_id) REFERENCES services(id),
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);
+
+-- Service transactions table
+CREATE TABLE service_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    service_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    seller_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    mpesa_transaction_id VARCHAR(100),
+    status ENUM('pending', 'completed', 'cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_id) REFERENCES services(id),
+    FOREIGN KEY (buyer_id) REFERENCES users(id),
+    FOREIGN KEY (seller_id) REFERENCES users(id)
+);
+
+-- work submissions
+CREATE TABLE work_submissions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  job_id INT NOT NULL,
+  freelancer_id INT NOT NULL,
+  submission_text TEXT NOT NULL,
+  status ENUM('pending', 'approved', 'revision_requested') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (job_id) REFERENCES jobs(id),
+  FOREIGN KEY (freelancer_id) REFERENCES users(id)
+);
+
+-- submission files
+CREATE TABLE submission_files (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  submission_id INT NOT NULL,
+  file_path VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (submission_id) REFERENCES work_submissions(id)
+);
+
+-- revision-requests
+CREATE TABLE revision_requests (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  job_id INT NOT NULL,
+  client_id INT NOT NULL,
+  revision_notes TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (job_id) REFERENCES jobs(id),
+  FOREIGN KEY (client_id) REFERENCES users(id)
+);
+
 
 -- updates
 ALTER TABLE jobs 
@@ -125,3 +198,14 @@ ALTER TABLE jobs
 ALTER TABLE bids
     ADD COLUMN delivery_time INT NOT NULL,
     ADD COLUMN proposal_file VARCHAR(255);
+
+    -- Added new columns to jobs table
+ALTER TABLE jobs
+ADD COLUMN completed_work VARCHAR(255),
+ADD COLUMN completion_notes TEXT,
+ADD COLUMN review_feedback TEXT;
+-- Updated jobs table status enum
+ALTER TABLE jobs 
+MODIFY COLUMN status ENUM('open', 'in_progress', 'pending_review', 'pending_payment', 'completed') DEFAULT 'open';
+-- updated the jobs table
+ALTER TABLE jobs ADD COLUMN paid BOOLEAN DEFAULT FALSE;

@@ -1,0 +1,64 @@
+<%- include('_header') %>
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">M-Pesa Payment</h2>
+
+          <div class="alert alert-info">
+            <h5>Payment Instructions:</h5>
+            <ol>
+              <li>Go to M-Pesa on your phone</li>
+              <li>Select "Lipa na M-Pesa"</li>
+              <li>Select "Pay Bill"</li>
+              <li>Enter Business Number: <strong>123456</strong></li>
+              <li>
+                Enter Account Number: <strong><%= transactionId %></strong>
+              </li>
+              <li>Enter Amount: <strong>KES <%= service.price %></strong></li>
+              <li>Enter your M-Pesa PIN</li>
+              <li>Enter the M-Pesa confirmation code below</li>
+            </ol>
+          </div>
+
+          <form
+            action="/services/<%= service.id %>/process-payment"
+            method="POST"
+            class="needs-validation"
+            novalidate
+          >
+            <input
+              type="hidden"
+              name="transactionId"
+              value="<%= transactionId %>"
+            />
+
+            <div class="mb-3">
+              <label for="mpesaCode" class="form-label"
+                >M-Pesa Confirmation Code</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="mpesaCode"
+                name="mpesaCode"
+                required
+                pattern="[A-Z0-9]{10}"
+                placeholder="e.g., QK7SIMP0X2"
+              />
+              <div class="invalid-feedback">
+                Please enter a valid M-Pesa confirmation code.
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              Confirm Payment
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

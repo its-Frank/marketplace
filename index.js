@@ -48,29 +48,34 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
-// Configure multer for file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/uploads/gig_images/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg") {
-      return cb(new Error("Only images are allowed"));
-    }
-    cb(null, true);
-  },
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB file size limit
-  },
-});
-//storage configuration for bid files
+// configured my multer configuration to handle multiple upload destinations
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     if (req.path === "/client/edit-profile") {
+//       cb(null, "public/uploads/profiles/");
+//     } else {
+//       cb(null, "public/uploads/gig_images/");
+//     }
+//   },
+//   filename: (req, file, cb) => {
+//     const prefix = req.path === "/client/edit-profile" ? "profile-" : "";
+//     cb(null, prefix + Date.now() + path.extname(file.originalname));
+//   },
+// });
+// const upload = multer({
+//   storage: storage,
+//   fileFilter: (req, file, cb) => {
+//     const ext = path.extname(file.originalname).toLowerCase();
+//     if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg") {
+//       return cb(new Error("Only images are allowed"));
+//     }
+//     cb(null, true);
+//   },
+//   limits: {
+//     fileSize: 5 * 1024 * 1024,
+//   },
+// });
+//bid_images
 const bidStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/uploads/bid_files/");
@@ -82,9 +87,73 @@ const bidStorage = multer.diskStorage({
 const uploadBidFile = multer({
   storage: bidStorage,
   limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
+
+// File upload configuration for work submissions
+const workUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "public/uploads/work_submissions/");
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + "-" + file.originalname);
+    },
+  }),
+});
+
+//start
+// Helper function to check file type
+function checkFileType(file, cb) {
+  const filetypes = /jpeg|jpg|png|gif/;
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = filetypes.test(file.mimetype);
+  if (mimetype && extname) {
+    cb(null, true);
+  } else {
+    cb("Error: Images Only!");
+  }
+}
+// Multer storage configuration with dynamic destination based on fieldname
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    let destinationPath;
+    switch (file.fieldname) {
+      case "profileImage":
+        destinationPath = "public/uploads/profiles/";
+        break;
+      case "gigImage":
+        destinationPath = "public/uploads/gig_images/";
+        break;
+      case "serviceImage":
+        destinationPath = "public/uploads/services/";
+        break;
+      default:
+        return cb(new Error("Invalid file field name"), null);
+    }
+    cb(null, destinationPath);
+  },
+  filename: (req, file, cb) => {
+    const prefix =
+      file.fieldname === "profileImage"
+        ? "profile-"
+        : file.fieldname === "serviceImage"
+        ? "service-"
+        : "";
+    cb(null, prefix + Date.now() + path.extname(file.originalname));
+  },
+});
+// Multer configuration
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => checkFileType(file, cb),
+  limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
+
+//end
 
 // Routes
 app.get("/", (req, res) => {
@@ -235,7 +304,6 @@ app.post(
     }
   }
 );
-
 // Route to display job details
 app.get("/job/:id", (req, res) => {
   const jobId = req.params.id;
@@ -442,81 +510,8 @@ app.post("/register", (req, res) => {
     });
   });
 });
-//dashboard
-// app.get("/dashboard", isAuthenticated, (req, res) => {
-//   const query = "SELECT * FROM users WHERE id = ?";
-//   connection.query(query, [req.session.userId], (err, results) => {
-//     if (err || results.length === 0) {
-//       return res.status(500).json({ error: "Error fetching user data" });
-//     }
-//     const user = results[0];
-//     let successMessage = req.session.successMessage || null;
-//     req.session.successMessage = null;
-//     if (user.user_type === "freelancer") {
-//       const bidsQuery = `
-//           SELECT b.*, j.title AS job_title
-//           FROM bids b
-//           JOIN jobs j ON b.job_id = j.id
-//           WHERE b.freelancer_id = ? AND b.status = 'pending'
-//         `;
-//       const jobsQuery = `
-//           SELECT j.*
-//           FROM jobs j
-//           JOIN bids b ON j.id = b.job_id
-//           WHERE b.freelancer_id = ? AND j.status = 'in_progress'
-//         `;
-//       connection.query(bidsQuery, [user.id], (err, bids) => {
-//         if (err) {
-//           return res.status(500).json({ error: "Error fetching bids" });
-//         }
-//         connection.query(jobsQuery, [user.id], (err, jobs) => {
-//           if (err) {
-//             return res.status(500).json({ error: "Error fetching jobs" });
-//           }
-//           res.render("freedashboard", {
-//             user,
-//             activeBids: bids,
-//             ongoingJobs: jobs,
-//             successMessage,
-//           });
-//         });
-//       });
-//     } else {
-//       const activeJobsQuery = `
-//           SELECT * FROM jobs
-//           WHERE client_id = ? AND status IN ('open', 'in_progress')
-//         `;
-//       const completedJobsQuery = `
-//           SELECT * FROM jobs
-//           WHERE client_id = ? AND status = 'completed'
-//         `;
-//       connection.query(activeJobsQuery, [user.id], (err, activeJobs) => {
-//         if (err) {
-//           return res.status(500).json({ error: "Error fetching active jobs" });
-//         }
-//         connection.query(
-//           completedJobsQuery,
-//           [user.id],
-//           (err, completedJobs) => {
-//             if (err) {
-//               return res
-//                 .status(500)
-//                 .json({ error: "Error fetching completed jobs" });
-//             }
-//             res.render("clientdashboard", {
-//               user,
-//               activeJobs,
-//               completedJobs,
-//               successMessage,
-//             });
-//           }
-//         );
-//       });
-//     }
-//   });
-// });
 
-//start
+//dashboard
 app.get("/dashboard", isAuthenticated, (req, res) => {
   const query = "SELECT * FROM users WHERE id = ?";
   connection.query(query, [req.session.userId], (err, results) => {
@@ -527,7 +522,6 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
     let successMessage = req.session.successMessage || null;
     req.session.successMessage = null;
     if (user.user_type === "freelancer") {
-      // Fetch active bids and ongoing jobs for freelancer
       const bidsQuery = `
         SELECT b.*, j.title AS job_title
         FROM bids b
@@ -540,6 +534,17 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
         JOIN bids b ON j.id = b.job_id
         WHERE b.freelancer_id = ? AND j.status = 'in_progress'
       `;
+      const completedJobsQuery = `
+    SELECT j.*, b.amount as payment_amount,
+           CASE 
+             WHEN j.paid = 0 THEN 'pending'
+             WHEN j.paid = 1 THEN 'paid'
+           END as payment_status
+    FROM jobs j
+    JOIN bids b ON j.id = b.job_id
+    WHERE b.freelancer_id = ? 
+    AND j.status = 'completed'
+  `;
       connection.query(bidsQuery, [user.id], (err, bids) => {
         if (err) {
           return res.status(500).json({ error: "Error fetching bids" });
@@ -548,12 +553,24 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
           if (err) {
             return res.status(500).json({ error: "Error fetching jobs" });
           }
-          res.render("freedashboard", {
-            user,
-            activeBids: bids,
-            ongoingJobs: jobs,
-            successMessage,
-          });
+          connection.query(
+            completedJobsQuery,
+            [user.id],
+            (err, completedJobs) => {
+              if (err) {
+                return res
+                  .status(500)
+                  .json({ error: "Error fetching completed jobs" });
+              }
+              res.render("freedashboard", {
+                user,
+                activeBids: bids,
+                ongoingJobs: jobs,
+                completedJobs,
+                successMessage,
+              });
+            }
+          );
         });
       });
     } else {
@@ -644,9 +661,67 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
     }
   });
 });
-//end
 
-// Route to display edit profile form
+//edit profile for client
+app.get("/client/edit-profile", isAuthenticated, (req, res) => {
+  const query = "SELECT * FROM users WHERE id = ?";
+  connection.query(query, [req.session.userId], (err, results) => {
+    if (err || results.length === 0) {
+      return res.redirect("/dashboard");
+    }
+    res.render("editclient-profile", {
+      user: results[0],
+      errorMessage: req.session.errorMessage || null,
+    });
+    req.session.errorMessage = null;
+  });
+});
+app.post(
+  "/client/edit-profile",
+  isAuthenticated,
+  upload.single("profile_picture"),
+  (req, res) => {
+    const { name, email, location, bio } = req.body;
+    let updateQuery = `
+    UPDATE users 
+    SET name = ?, email = ?, location = ?, bio = ?
+  `;
+    let queryParams = [name, email, location, bio];
+    // If a new profile picture was uploaded, add it to the update query
+    if (req.file) {
+      updateQuery += `, profile_picture = ?`;
+      queryParams.push(`/uploads/profiles/${req.file.filename}`);
+    }
+    updateQuery += ` WHERE id = ?`;
+    queryParams.push(req.session.userId);
+    // First check if email is already taken (excluding current user)
+    connection.query(
+      "SELECT id FROM users WHERE email = ? AND id != ?",
+      [email, req.session.userId],
+      (err, results) => {
+        if (err) {
+          req.session.errorMessage = "An error occurred. Please try again.";
+          return res.redirect("/client/editclient-profile");
+        }
+        if (results.length > 0) {
+          req.session.errorMessage = "Email is already taken.";
+          return res.redirect("/client/editclient-profile");
+        }
+        // If email is available, proceed with update
+        connection.query(updateQuery, queryParams, (err, result) => {
+          if (err) {
+            req.session.errorMessage =
+              "An error occurred while updating your profile.";
+            return res.redirect("/client/editclient-profile");
+          }
+          req.session.successMessage = "Profile updated successfully!";
+          res.redirect("/dashboard");
+        });
+      }
+    );
+  }
+);
+// Route to display edit profile form of a freelancer
 app.get("/edit-profile", isAuthenticated, (req, res) => {
   if (req.session.userType !== "freelancer") {
     return res.redirect("/dashboard");
@@ -686,7 +761,6 @@ app.post("/edit-profile", isAuthenticated, (req, res) => {
     }
   );
 });
-
 app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -815,6 +889,37 @@ app.post("/messages/reply/:messageId", isAuthenticated, (req, res) => {
   });
 });
 
+// route to view messages
+app.get("/messages", isAuthenticated, (req, res) => {
+  const query = `
+    SELECT 
+      m.*,
+      sender.name as sender_name,
+      receiver.name as receiver_name,
+      j.title as job_title
+    FROM messages m
+    JOIN users sender ON m.sender_id = sender.id
+    JOIN users receiver ON m.receiver_id = receiver.id
+    LEFT JOIN jobs j ON m.job_id = j.id
+    WHERE m.sender_id = ? OR m.receiver_id = ?
+    ORDER BY m.created_at DESC
+  `;
+  connection.query(
+    query,
+    [req.session.userId, req.session.userId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Error fetching messages" });
+      }
+      res.render("messages", {
+        messages: results,
+        currentUser: { id: req.session.userId },
+        user: { id: req.session.userId },
+      });
+    }
+  );
+});
+
 // Route to show job invitation form
 app.get("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
@@ -891,36 +996,6 @@ app.post("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
           res.redirect(`/freelancer/${freelancerId}`);
         }
       );
-    }
-  );
-});
-// route to view messages
-app.get("/messages", isAuthenticated, (req, res) => {
-  const query = `
-    SELECT 
-      m.*,
-      sender.name as sender_name,
-      receiver.name as receiver_name,
-      j.title as job_title
-    FROM messages m
-    JOIN users sender ON m.sender_id = sender.id
-    JOIN users receiver ON m.receiver_id = receiver.id
-    LEFT JOIN jobs j ON m.job_id = j.id
-    WHERE m.sender_id = ? OR m.receiver_id = ?
-    ORDER BY m.created_at DESC
-  `;
-  connection.query(
-    query,
-    [req.session.userId, req.session.userId],
-    (err, results) => {
-      if (err) {
-        return res.status(500).json({ error: "Error fetching messages" });
-      }
-      res.render("messages", {
-        messages: results,
-        currentUser: { id: req.session.userId },
-        user: { id: req.session.userId },
-      });
     }
   );
 });
@@ -1056,9 +1131,371 @@ app.post("/bids/:bidId/reject", isAuthenticated, (req, res) => {
   });
 });
 
-app.get("*", (req, res) => {
-  res.render("error");
+// List all services
+app.get("/services", (req, res) => {
+  connection.query(
+    `
+    SELECT s.*, u.name as seller_name 
+    FROM services s 
+    JOIN users u ON s.seller_id = u.id 
+    WHERE s.status = 'available'
+    ORDER BY s.created_at DESC
+  `,
+    (error, services) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send("Server error");
+      }
+
+      res.render("service-list", {
+        services,
+        user: req.session.userId ? { id: req.session.userId } : null,
+      });
+    }
+  );
 });
+// Create service form
+app.get("/services/create", isAuthenticated, (req, res) => {
+  res.render("service-create", {
+    user: { id: req.session.userId },
+  });
+});
+// Create new service
+app.post("/services/create", isAuthenticated, (req, res) => {
+  // Specifying single file upload for the `serviceImage` field
+  upload.single("serviceImage")(req, res, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(400).send("Error uploading file");
+    }
+    const { title, description, price } = req.body;
+    const image_path = req.file
+      ? `/uploads/services/${req.file.filename}`
+      : null;
+    connection.query(
+      `
+      INSERT INTO services (seller_id, title, description, price, image_path)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [req.session.userId, title, description, price, image_path],
+      (error) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).send("Server error");
+        }
+        res.redirect("/services");
+      }
+    );
+  });
+});
+// Service details
+app.get("/services/:id", (req, res) => {
+  connection.query(
+    `
+    SELECT s.*, u.name as seller_name 
+    FROM services s 
+    JOIN users u ON s.seller_id = u.id 
+    WHERE s.id = ?
+  `,
+    [req.params.id],
+    (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send("Server error");
+      }
+      if (!results[0]) {
+        return res.status(404).send("Service not found");
+      }
+      res.render("service-details", {
+        service: results[0],
+        user: req.session.userId ? { id: req.session.userId } : null,
+      });
+    }
+  );
+});
+// Initialize payment
+app.post("/services/:id/purchase", isAuthenticated, (req, res) => {
+  // First get the service details
+  connection.query(
+    "SELECT * FROM services WHERE id = ?",
+    [req.params.id],
+    (error, serviceResults) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send("Server error");
+      }
+      if (!serviceResults[0]) {
+        return res.status(404).send("Service not found");
+      }
+      const service = serviceResults[0];
+      // Create transaction record
+      connection.query(
+        `
+      INSERT INTO service_transactions (service_id, buyer_id, seller_id, amount, status)
+      VALUES (?, ?, ?, ?, 'pending')
+    `,
+        [service.id, req.session.userId, service.seller_id, service.price],
+        (error, result) => {
+          if (error) {
+            console.error(error);
+            return res.status(500).send("Server error");
+          }
+          res.render("payments", {
+            service,
+            transactionId: result.insertId,
+            user: { id: req.session.userId },
+          });
+        }
+      );
+    }
+  );
+});
+
+// Process M-Pesa payment (mock)
+app.post("/services/:id/process-payment", isAuthenticated, (req, res) => {
+  const { transactionId, mpesaCode } = req.body;
+  connection.query(
+    `
+    UPDATE service_transactions 
+    SET mpesa_transaction_id = ?, status = 'completed'
+    WHERE id = ?
+  `,
+    [mpesaCode, transactionId],
+    (error) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send("Server error");
+      }
+      res.redirect("/services");
+    }
+  );
+});
+
+//start
+// Route to handle work submission
+app.post(
+  "/jobs/:jobId/submit",
+  isAuthenticated,
+  workUpload.array("work_files", 5),
+  (req, res) => {
+    if (req.session.userType !== "freelancer") {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const jobId = req.params.jobId;
+    const { submission_text } = req.body;
+    const files = req.files;
+
+    // First, verify this freelancer is assigned to this job
+    const verifyQuery = `
+    SELECT * FROM jobs j
+    JOIN bids b ON j.id = b.job_id
+    WHERE j.id = ? AND b.freelancer_id = ? AND b.status = 'accepted'
+  `;
+
+    connection.query(
+      verifyQuery,
+      [jobId, req.session.userId],
+      (err, results) => {
+        if (err || results.length === 0) {
+          return res.status(403).json({ error: "Not authorized for this job" });
+        }
+
+        // Create work submission
+        const submissionQuery = `
+      INSERT INTO work_submissions (job_id, freelancer_id, submission_text, status)
+      VALUES (?, ?, ?, 'pending')
+    `;
+
+        connection.query(
+          submissionQuery,
+          [jobId, req.session.userId, submission_text],
+          (err, result) => {
+            if (err) {
+              return res
+                .status(500)
+                .json({ error: "Error creating submission" });
+            }
+
+            const submissionId = result.insertId;
+
+            // Handle file uploads
+            if (files && files.length > 0) {
+              const filePromises = files.map((file) => {
+                return new Promise((resolve, reject) => {
+                  const filePath = "/uploads/work_submissions/" + file.filename;
+                  const fileQuery = `
+              INSERT INTO submission_files (submission_id, file_path)
+              VALUES (?, ?)
+            `;
+                  connection.query(
+                    fileQuery,
+                    [submissionId, filePath],
+                    (err, result) => {
+                      if (err) reject(err);
+                      else resolve(result);
+                    }
+                  );
+                });
+              });
+
+              Promise.all(filePromises)
+                .then(() => {
+                  // Update job status
+                  const updateJobQuery = `
+              UPDATE jobs SET status = 'review' WHERE id = ?
+            `;
+                  connection.query(updateJobQuery, [jobId], (err) => {
+                    if (err) {
+                      console.error("Error updating job status:", err);
+                    }
+                    res.redirect("/dashboard");
+                  });
+                })
+                .catch((err) => {
+                  console.error("Error saving files:", err);
+                  res.status(500).json({ error: "Error saving files" });
+                });
+            } else {
+              // Update job status even if no files
+              const updateJobQuery = `
+          UPDATE jobs SET status = 'review' WHERE id = ?
+        `;
+              connection.query(updateJobQuery, [jobId], (err) => {
+                if (err) {
+                  console.error("Error updating job status:", err);
+                }
+                res.redirect("/dashboard");
+              });
+            }
+          }
+        );
+      }
+    );
+  }
+);
+
+// Route to handle client review
+app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
+  if (req.session.userType !== "client") {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const jobId = req.params.jobId;
+  const { status, revision_notes } = req.body;
+
+  // Verify this is the client's job
+  const verifyQuery = `
+    SELECT * FROM jobs WHERE id = ? AND client_id = ?
+  `;
+
+  connection.query(verifyQuery, [jobId, req.session.userId], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(403).json({ error: "Not authorized for this job" });
+    }
+
+    if (status === "approved") {
+      // Update job status to payment_pending
+      const updateQuery = `
+        UPDATE jobs SET status = 'payment_pending' WHERE id = ?
+      `;
+      connection.query(updateQuery, [jobId], (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Error updating job status" });
+        }
+        res.redirect(`/jobs/${jobId}/payment`);
+      });
+    } else if (status === "revision") {
+      // Create revision request
+      const revisionQuery = `
+        INSERT INTO revision_requests (job_id, client_id, revision_notes)
+        VALUES (?, ?, ?)
+      `;
+      connection.query(
+        revisionQuery,
+        [jobId, req.session.userId, revision_notes],
+        (err) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ error: "Error creating revision request" });
+          }
+          // Update job status
+          const updateQuery = `
+          UPDATE jobs SET status = 'revision' WHERE id = ?
+        `;
+          connection.query(updateQuery, [jobId], (err) => {
+            if (err) {
+              return res
+                .status(500)
+                .json({ error: "Error updating job status" });
+            }
+            res.redirect("/dashboard");
+          });
+        }
+      );
+    }
+  });
+});
+
+// Route to process payment
+app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
+  if (req.session.userType !== "client") {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const jobId = req.params.jobId;
+  const { payment_method, transaction_id } = req.body;
+
+  // Verify job status and ownership
+  const verifyQuery = `
+    SELECT * FROM jobs WHERE id = ? AND client_id = ? AND status = 'payment_pending'
+  `;
+
+  connection.query(verifyQuery, [jobId, req.session.userId], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(403).json({ error: "Invalid job or status" });
+    }
+
+    const job = results[0];
+
+    // Create payment record
+    const paymentQuery = `
+      INSERT INTO payments (job_id, amount, payment_method, transaction_id)
+      VALUES (?, ?, ?, ?)
+    `;
+
+    connection.query(
+      paymentQuery,
+      [jobId, job.budget, payment_method, transaction_id],
+      (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Error processing payment" });
+        }
+
+        // Update job status to completed
+        const updateQuery = `
+        UPDATE jobs SET status = 'completed' WHERE id = ?
+      `;
+
+        connection.query(updateQuery, [jobId], (err) => {
+          if (err) {
+            return res.status(500).json({ error: "Error updating job status" });
+          }
+
+          res.redirect("/dashboard");
+        });
+      }
+    );
+  });
+});
+
+//end
+
+//error
+// app.get("*", (req, res) => {
+//   res.render("error");
+// });
 
 const PORT = 5000;
 app.listen(PORT, () => {
