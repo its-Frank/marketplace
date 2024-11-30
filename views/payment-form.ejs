@@ -1,0 +1,42 @@
+<%- include('_header') %>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Process Payment</h5>
+          <h6 class="card-subtitle mb-3 text-muted">Job: <%= job.title %></h6>
+          <div class="mb-3">
+            <p><strong>Freelancer:</strong> <%= job.freelancer_name %></p>
+            <p><strong>Amount:</strong> $<%= job.payment_amount %></p>
+          </div>
+          <form action="/jobs/<%= job.id %>/payment" method="POST">
+            <div class="mb-3">
+              <label class="form-label">Payment Method</label>
+              <select name="payment_method" class="form-select" required>
+                <option value="credit_card">Mpesa</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="paypal">PayPal</option>
+                <option value="bank_transfer">Bank Transfer</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Transaction ID</label>
+              <input
+                type="text"
+                name="transaction_id"
+                class="form-control"
+                required
+                placeholder="Enter transaction ID"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Process Payment
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

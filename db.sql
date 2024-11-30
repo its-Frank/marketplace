@@ -209,3 +209,6 @@ ALTER TABLE jobs
 MODIFY COLUMN status ENUM('open', 'in_progress', 'pending_review', 'pending_payment', 'completed') DEFAULT 'open';
 -- updated the jobs table
 ALTER TABLE jobs ADD COLUMN paid BOOLEAN DEFAULT FALSE;
+-- work submissions
+ALTER TABLE work_submissions
+ADD COLUMN rating INT;

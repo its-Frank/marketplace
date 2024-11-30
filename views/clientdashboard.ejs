@@ -1,4 +1,3 @@
-<!-- clientdashboard.ejs -->
 <%- include('_header') %>
 <div class="container mt-5">
   <h1 class="mb-4">Welcome, <%= user.name %></h1>
@@ -37,48 +36,56 @@
               <h6 class="card-title d-flex justify-content-between">
                 <%= job.title %>
                 <span
-                  class="badge <%= job.status === 'open' ? 'bg-primary' : 'bg-info' %>"
+                  class="badge <%= job.status === 'open' ? 'bg-primary' : job.status === 'pending_review' ? 'bg-warning' : 'bg-info' %>"
                 >
-                  <%= job.status === 'open' ? 'Open' : 'In Progress' %>
+                  <%= job.status === 'open' ? 'Open' : job.status ===
+                  'pending_review' ? 'Under Review' : 'In Progress' %>
                 </span>
               </h6>
               <p class="card-text"><small>Budget: $<%= job.budget %></small></p>
-              <!-- Work Submissions Section -->
-              <% if (job.submissions && job.submissions.length > 0) { %>
+              <!-- Work Submission Section -->
+              <% if (job.submission_id) { %>
               <div class="mt-3">
-                <h6>Work Submissions</h6>
-                <% job.submissions.forEach(function(submission) { %>
+                <h6>Work Submission</h6>
                 <div class="card mb-2">
                   <div class="card-body">
                     <h6 class="card-subtitle mb-2">
-                      Submitted by <%= submission.freelancer_name %>
+                      Submitted by <%= job.freelancer_name %>
                       <span
-                        class="badge <%= submission.status === 'pending' ? 'bg-warning' : submission.status === 'approved' ? 'bg-success' : submission.status === 'revision' ? 'bg-info' : 'bg-secondary' %>"
+                        class="badge <%= job.submission_status === 'pending' ? 'bg-warning' : job.submission_status === 'approved' ? 'bg-success' : 'bg-info' %>"
                       >
-                        <%= submission.status %>
+                        <%= job.submission_status %>
                       </span>
                     </h6>
-                    <p class="card-text"><%= submission.description %></p>
-                    <% if (submission.files) { %>
+                    <p class="card-text"><%= job.submission_description %></p>
+                    <!-- Submission Files -->
+                    <% if (job.submission_files && job.submission_files.length >
+                    0) { %>
                     <div class="mb-2">
-                      <% submission.files.forEach(function(file) { %>
+                      <% job.submission_files.forEach(function(file) { %>
                       <a
-                        href="<%= file.url %>"
+                        href="<%= file.file_path %>"
                         class="btn btn-outline-secondary btn-sm me-2"
                         target="_blank"
                       >
-                        View <%= file.name %>
+                        View File
                       </a>
                       <% }); %>
                     </div>
-                    <% } %> <% if (submission.status === 'pending') { %>
-                    <div class="btn-group">
+                    <% } %>
+                    <!-- Review Actions -->
+                    <% if (job.submission_status === 'pending') { %>
+                    <div class="mt-3">
                       <form
-                        action="/submissions/<%= submission.id %>/approve"
+                        action="/jobs/<%= job.id %>/review"
                         method="POST"
-                        class="me-2"
+                        class="d-inline"
                       >
-                        <button type="submit" class="btn btn-success btn-sm">
+                        <input type="hidden" name="status" value="approved" />
+                        <button
+                          type="submit"
+                          class="btn btn-success btn-sm me-2"
+                        >
                           Approve Work
                         </button>
                       </form>
@@ -86,15 +93,15 @@
                         type="button"
                         class="btn btn-warning btn-sm"
                         data-bs-toggle="modal"
-                        data-bs-target="#revisionModal<%= submission.id %>"
+                        data-bs-target="#revisionModal<%= job.id %>"
                       >
                         Request Revision
                       </button>
                     </div>
-                    <!-- Revision Request Modal -->
+                    <!-- Revision Modal -->
                     <div
                       class="modal fade"
-                      id="revisionModal<%= submission.id %>"
+                      id="revisionModal<%= job.id %>"
                       tabindex="-1"
                     >
                       <div class="modal-dialog">
@@ -108,12 +115,17 @@
                             ></button>
                           </div>
                           <form
-                            action="/submissions/<%= submission.id %>/revision"
+                            action="/jobs/<%= job.id %>/review"
                             method="POST"
                           >
+                            <input
+                              type="hidden"
+                              name="status"
+                              value="revision"
+                            />
                             <div class="modal-body">
                               <div class="form-group">
-                                <label>Revision Details</label>
+                                <label>Revision Notes</label>
                                 <textarea
                                   name="revision_notes"
                                   class="form-control"
@@ -140,15 +152,143 @@
                     <% } %>
                   </div>
                 </div>
-                <% }); %>
               </div>
               <% } %>
               <!-- Bids Section -->
               <div class="mt-3">
                 <h6>Bids (<%= job.bids.length %>)</h6>
-                <% if (job.bids.length > 0) { %> <%
+                <% if (job.bids && job.bids.length > 0) { %> <%
                 job.bids.forEach(function(bid) { %>
-                <!-- Existing bid display code remains the same -->
+                <div class="card mb-2">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2">
+                      Bid by <%= bid.freelancer_name %>
+                    </h6>
+                    <p class="card-text">
+                      <small class="text-muted"
+                        >Amount: $<%= bid.amount %></small
+                      >
+                    </p>
+                    <p class="card-text"><%= bid.proposal %></p>
+                    <% if (job.status === 'open') { %>
+                    <div class="bid-actions">
+                      <!-- Accept Bid Button -->
+                      <button
+                        type="button"
+                        class="btn btn-success btn-sm me-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#acceptBidModal<%= bid.id %>"
+                      >
+                        Accept Bid
+                      </button>
+                      <!-- Reject Bid Button -->
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#rejectBidModal<%= bid.id %>"
+                      >
+                        Reject Bid
+                      </button>
+                    </div>
+                    <!-- Accept Bid Modal -->
+                    <div
+                      class="modal fade"
+                      id="acceptBidModal<%= bid.id %>"
+                      tabindex="-1"
+                    >
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Accept Bid</h5>
+                            <button
+                              type="button"
+                              class="btn-close"
+                              data-bs-dismiss="modal"
+                            ></button>
+                          </div>
+                          <form
+                            action="/bids/<%= bid.id %>/accept"
+                            method="POST"
+                          >
+                            <div class="modal-body">
+                              <div class="form-group">
+                                <label>Project Requirements</label>
+                                <textarea
+                                  name="requirements"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Enter any specific requirements or instructions for the freelancer"
+                                  required
+                                ></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                              >
+                                Cancel
+                              </button>
+                              <button type="submit" class="btn btn-success">
+                                Accept & Send Requirements
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Reject Bid Modal -->
+                    <div
+                      class="modal fade"
+                      id="rejectBidModal<%= bid.id %>"
+                      tabindex="-1"
+                    >
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Reject Bid</h5>
+                            <button
+                              type="button"
+                              class="btn-close"
+                              data-bs-dismiss="modal"
+                            ></button>
+                          </div>
+                          <form
+                            action="/bids/<%= bid.id %>/reject"
+                            method="POST"
+                          >
+                            <div class="modal-body">
+                              <div class="form-group">
+                                <label>Rejection Reason (Optional)</label>
+                                <textarea
+                                  name="reason"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Provide a reason for rejecting this bid (optional)"
+                                ></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                              >
+                                Cancel
+                              </button>
+                              <button type="submit" class="btn btn-danger">
+                                Reject Bid
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <% } %>
+                  </div>
+                </div>
                 <% }); %> <% } else { %>
                 <p class="text-muted">No bids yet</p>
                 <% } %>
@@ -170,27 +310,21 @@
             <div class="card-body">
               <h6 class="card-title d-flex justify-content-between">
                 <%= job.title %>
-                <span
-                  class="badge <%= job.payment_status === 'pending' ? 'bg-warning' : job.payment_status === 'paid' ? 'bg-success' : 'bg-secondary' %>"
-                >
-                  <%= job.payment_status === 'pending' ? 'Payment Pending' :
-                  'Paid' %>
-                </span>
+                <span class="badge bg-success">Completed</span>
               </h6>
-              <p class="mb-1">Budget: $<%= job.budget %></p>
-              <p class="mb-2">
-                <small class="text-muted"
-                  >Completed on: <%= new
-                  Date(job.updated_at).toLocaleDateString() %></small
-                >
+              <p class="mb-1">
+                <strong>Freelancer:</strong> <%= job.freelancer_name %>
               </p>
-              <% if (job.payment_status === 'pending') { %>
-              <form action="/jobs/<%= job.id %>/pay" method="POST">
-                <button type="submit" class="btn btn-primary btn-sm">
-                  Process Payment
-                </button>
-              </form>
-              <% } %>
+              <p class="mb-1">
+                <strong>Payment Amount:</strong> $<%= job.payment_amount %>
+              </p>
+              <p class="mb-1">
+                <strong>Bids Received:</strong> <%= job.bid_count || 0 %>
+              </p>
+              <small class="text-muted">
+                Completed on: <%= new Date(job.updated_at).toLocaleDateString()
+                %>
+              </small>
             </div>
           </div>
           <% }); %> <% } else { %>

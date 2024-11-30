@@ -48,33 +48,6 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
-// configured my multer configuration to handle multiple upload destinations
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     if (req.path === "/client/edit-profile") {
-//       cb(null, "public/uploads/profiles/");
-//     } else {
-//       cb(null, "public/uploads/gig_images/");
-//     }
-//   },
-//   filename: (req, file, cb) => {
-//     const prefix = req.path === "/client/edit-profile" ? "profile-" : "";
-//     cb(null, prefix + Date.now() + path.extname(file.originalname));
-//   },
-// });
-// const upload = multer({
-//   storage: storage,
-//   fileFilter: (req, file, cb) => {
-//     const ext = path.extname(file.originalname).toLowerCase();
-//     if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg") {
-//       return cb(new Error("Only images are allowed"));
-//     }
-//     cb(null, true);
-//   },
-//   limits: {
-//     fileSize: 5 * 1024 * 1024,
-//   },
-// });
 //bid_images
 const bidStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -90,7 +63,6 @@ const uploadBidFile = multer({
     fileSize: 10 * 1024 * 1024,
   },
 });
-
 // File upload configuration for work submissions
 const workUpload = multer({
   storage: multer.diskStorage({
@@ -102,8 +74,6 @@ const workUpload = multer({
     },
   }),
 });
-
-//start
 // Helper function to check file type
 function checkFileType(file, cb) {
   const filetypes = /jpeg|jpg|png|gif/;
@@ -129,6 +99,9 @@ const storage = multer.diskStorage({
       case "serviceImage":
         destinationPath = "public/uploads/services/";
         break;
+      case "gig_images": // Add this case
+        destinationPath = "public/uploads/gig_images/";
+        break;
       default:
         return cb(new Error("Invalid file field name"), null);
     }
@@ -140,10 +113,13 @@ const storage = multer.diskStorage({
         ? "profile-"
         : file.fieldname === "serviceImage"
         ? "service-"
+        : file.fieldname === "gig_images" // Add this condition
+        ? "gig-"
         : "";
     cb(null, prefix + Date.now() + path.extname(file.originalname));
   },
 });
+
 // Multer configuration
 const upload = multer({
   storage: storage,
@@ -152,9 +128,6 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
-
-//end
-
 // Routes
 app.get("/", (req, res) => {
   res.render("index", {
@@ -395,7 +368,6 @@ app.post(
     );
   }
 );
-
 //getting freelancers
 app.get("/freelancers", (req, res) => {
   const query =
@@ -410,7 +382,6 @@ app.get("/freelancers", (req, res) => {
     });
   });
 });
-
 //getting freelancer details
 app.get("/freelancer/:id", (req, res) => {
   const freelancerId = req.params.id;
@@ -456,7 +427,6 @@ app.get("/freelancer/:id", (req, res) => {
       // Get success message from session and clear it
       const successMessage = req.session.successMessage;
       req.session.successMessage = null;
-
       res.render("freelancer-profile", {
         freelancer: results[0],
         reviews: reviews,
@@ -493,7 +463,6 @@ app.post("/login", (req, res) => {
 app.get("/register", (req, res) => {
   res.render("register", { user: null });
 });
-
 app.post("/register", (req, res) => {
   const { name, email, password, userType } = req.body;
   bcrypt.hash(password, 10, (err, hash) => {
@@ -510,8 +479,7 @@ app.post("/register", (req, res) => {
     });
   });
 });
-
-//dashboard
+// dashboard
 app.get("/dashboard", isAuthenticated, (req, res) => {
   const query = "SELECT * FROM users WHERE id = ?";
   connection.query(query, [req.session.userId], (err, results) => {
@@ -529,22 +497,25 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
         WHERE b.freelancer_id = ? AND b.status = 'pending'
       `;
       const jobsQuery = `
-        SELECT j.*
+        SELECT j.*, ws.status as submission_status
         FROM jobs j
         JOIN bids b ON j.id = b.job_id
-        WHERE b.freelancer_id = ? AND j.status = 'in_progress'
+        LEFT JOIN work_submissions ws ON j.id = ws.job_id
+        WHERE b.freelancer_id = ? AND j.status IN ('in_progress', 'pending_review')
       `;
       const completedJobsQuery = `
-    SELECT j.*, b.amount as payment_amount,
-           CASE 
-             WHEN j.paid = 0 THEN 'pending'
-             WHEN j.paid = 1 THEN 'paid'
-           END as payment_status
-    FROM jobs j
-    JOIN bids b ON j.id = b.job_id
-    WHERE b.freelancer_id = ? 
-    AND j.status = 'completed'
-  `;
+        SELECT j.*, b.amount as payment_amount,
+               CASE
+                 WHEN j.paid = 0 THEN 'pending'
+                 WHEN j.paid = 1 THEN 'paid'
+               END as payment_status,
+               ws.status as submission_status
+        FROM jobs j
+        JOIN bids b ON j.id = b.job_id
+        LEFT JOIN work_submissions ws ON j.id = ws.job_id
+        WHERE b.freelancer_id = ?
+        AND (j.status = 'completed' OR j.status = 'pending_review')
+      `;
       connection.query(bidsQuery, [user.id], (err, bids) => {
         if (err) {
           return res.status(500).json({ error: "Error fetching bids" });
@@ -574,28 +545,43 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
         });
       });
     } else {
-      // Updated client dashboard code with bid information
       const activeJobsQuery = `
-        SELECT j.*, COUNT(DISTINCT b.id) as bid_count, 
-               GROUP_CONCAT(DISTINCT b.id) as bid_ids 
+        SELECT
+          j.*,
+          COUNT(DISTINCT b.id) as bid_count,
+          GROUP_CONCAT(DISTINCT b.id) as bid_ids,
+          ws.id as submission_id,
+          ws.submission_text as submission_description,
+          ws.status as submission_status,
+          ws.created_at as submission_date,
+          u.name as freelancer_name,
+          u.email as freelancer_email
         FROM jobs j
         LEFT JOIN bids b ON j.id = b.job_id
-        WHERE j.client_id = ? AND j.status IN ('open', 'in_progress')
+        LEFT JOIN work_submissions ws ON j.id = ws.job_id
+        LEFT JOIN users u ON ws.freelancer_id = u.id
+        WHERE j.client_id = ?
+        AND j.status IN ('open', 'in_progress', 'pending_review')
         GROUP BY j.id
       `;
       const completedJobsQuery = `
-        SELECT * FROM jobs
-        WHERE client_id = ? AND status = 'completed'
+        SELECT j.*,
+               p.status as payment_status,
+               ws.submission_text as submission_description
+        FROM jobs j
+        LEFT JOIN payments p ON j.id = p.job_id
+        LEFT JOIN work_submissions ws ON j.id = ws.job_id
+        WHERE j.client_id = ?
+        AND j.status = 'completed'
       `;
       connection.query(activeJobsQuery, [user.id], (err, activeJobs) => {
         if (err) {
           return res.status(500).json({ error: "Error fetching active jobs" });
         }
-        // Get all bids for active jobs
         const jobIds = activeJobs.map((job) => job.id);
         if (jobIds.length > 0) {
           const bidsQuery = `
-            SELECT b.*, u.name as freelancer_name, 
+            SELECT b.*, u.name as freelancer_name,
                    u.email as freelancer_email,
                    ba.file_path as proposal_file
             FROM bids b
@@ -607,7 +593,6 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
             if (err) {
               return res.status(500).json({ error: "Error fetching bids" });
             }
-            // Group bids by job
             const bidsByJob = {};
             bids.forEach((bid) => {
               if (!bidsByJob[bid.job_id]) {
@@ -615,30 +600,70 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
               }
               bidsByJob[bid.job_id].push(bid);
             });
-            // Add bids to jobs
             activeJobs.forEach((job) => {
               job.bids = bidsByJob[job.id] || [];
             });
-            connection.query(
-              completedJobsQuery,
-              [user.id],
-              (err, completedJobs) => {
-                if (err) {
-                  return res
-                    .status(500)
-                    .json({ error: "Error fetching completed jobs" });
-                }
-                res.render("clientdashboard", {
-                  user,
-                  activeJobs,
-                  completedJobs,
-                  successMessage,
+            const submissionIds = activeJobs
+              .filter((job) => job.submission_id)
+              .map((job) => job.submission_id);
+
+            if (submissionIds.length > 0) {
+              const filesQuery = `
+                SELECT sf.*
+                FROM submission_files sf
+                WHERE sf.submission_id IN (?)
+              `;
+
+              connection.query(filesQuery, [submissionIds], (err, files) => {
+                if (err) files = [];
+
+                activeJobs.forEach((job) => {
+                  if (job.submission_id) {
+                    job.submission_files = files.filter(
+                      (file) => file.submission_id === job.submission_id
+                    );
+                  }
                 });
-              }
-            );
+
+                connection.query(
+                  completedJobsQuery,
+                  [user.id],
+                  (err, completedJobs) => {
+                    if (err) {
+                      return res
+                        .status(500)
+                        .json({ error: "Error fetching completed jobs" });
+                    }
+                    res.render("clientdashboard", {
+                      user,
+                      activeJobs,
+                      completedJobs,
+                      successMessage,
+                    });
+                  }
+                );
+              });
+            } else {
+              connection.query(
+                completedJobsQuery,
+                [user.id],
+                (err, completedJobs) => {
+                  if (err) {
+                    return res
+                      .status(500)
+                      .json({ error: "Error fetching completed jobs" });
+                  }
+                  res.render("clientdashboard", {
+                    user,
+                    activeJobs,
+                    completedJobs,
+                    successMessage,
+                  });
+                }
+              );
+            }
           });
         } else {
-          // If there are no active jobs, skip the bids query
           connection.query(
             completedJobsQuery,
             [user.id],
@@ -1130,7 +1155,6 @@ app.post("/bids/:bidId/reject", isAuthenticated, (req, res) => {
     res.redirect("/dashboard");
   });
 });
-
 // List all services
 app.get("/services", (req, res) => {
   connection.query(
@@ -1250,7 +1274,6 @@ app.post("/services/:id/purchase", isAuthenticated, (req, res) => {
     }
   );
 });
-
 // Process M-Pesa payment (mock)
 app.post("/services/:id/process-payment", isAuthenticated, (req, res) => {
   const { transactionId, mpesaCode } = req.body;
@@ -1271,63 +1294,63 @@ app.post("/services/:id/process-payment", isAuthenticated, (req, res) => {
   );
 });
 
-//start
-// Route to handle work submission
+// Modified work submission route
 app.post(
   "/jobs/:jobId/submit",
   isAuthenticated,
-  workUpload.array("work_files", 5),
+  workUpload.array("files", 5),
   (req, res) => {
     if (req.session.userType !== "freelancer") {
       return res.status(403).json({ error: "Unauthorized" });
     }
-
     const jobId = req.params.jobId;
-    const { submission_text } = req.body;
+    const { description } = req.body; // Changed from submission_text to match the form
     const files = req.files;
-
     // First, verify this freelancer is assigned to this job
     const verifyQuery = `
-    SELECT * FROM jobs j
+    SELECT j.*, b.freelancer_id 
+    FROM jobs j
     JOIN bids b ON j.id = b.job_id
     WHERE j.id = ? AND b.freelancer_id = ? AND b.status = 'accepted'
   `;
-
     connection.query(
       verifyQuery,
       [jobId, req.session.userId],
       (err, results) => {
-        if (err || results.length === 0) {
+        if (err) {
+          console.error("Verification error:", err);
+          return res
+            .status(500)
+            .json({ error: "Database error during verification" });
+        }
+        if (results.length === 0) {
           return res.status(403).json({ error: "Not authorized for this job" });
         }
-
         // Create work submission
         const submissionQuery = `
       INSERT INTO work_submissions (job_id, freelancer_id, submission_text, status)
       VALUES (?, ?, ?, 'pending')
     `;
-
         connection.query(
           submissionQuery,
-          [jobId, req.session.userId, submission_text],
+          [jobId, req.session.userId, description], // Using description from form
           (err, result) => {
             if (err) {
+              console.error("Submission error:", err);
               return res
                 .status(500)
                 .json({ error: "Error creating submission" });
             }
-
             const submissionId = result.insertId;
-
-            // Handle file uploads
+            // Handle file uploads if any
             if (files && files.length > 0) {
               const filePromises = files.map((file) => {
                 return new Promise((resolve, reject) => {
                   const filePath = "/uploads/work_submissions/" + file.filename;
                   const fileQuery = `
-              INSERT INTO submission_files (submission_id, file_path)
-              VALUES (?, ?)
-            `;
+                INSERT INTO submission_files (submission_id, file_path)
+                VALUES (?, ?)
+              `;
                   connection.query(
                     fileQuery,
                     [submissionId, filePath],
@@ -1338,16 +1361,18 @@ app.post(
                   );
                 });
               });
-
               Promise.all(filePromises)
                 .then(() => {
                   // Update job status
                   const updateJobQuery = `
-              UPDATE jobs SET status = 'review' WHERE id = ?
-            `;
+                UPDATE jobs SET status = 'pending_review' WHERE id = ?
+              `;
                   connection.query(updateJobQuery, [jobId], (err) => {
                     if (err) {
                       console.error("Error updating job status:", err);
+                      return res
+                        .status(500)
+                        .json({ error: "Error updating job status" });
                     }
                     res.redirect("/dashboard");
                   });
@@ -1359,11 +1384,14 @@ app.post(
             } else {
               // Update job status even if no files
               const updateJobQuery = `
-          UPDATE jobs SET status = 'review' WHERE id = ?
-        `;
+            UPDATE jobs SET status = 'pending_review' WHERE id = ?
+          `;
               connection.query(updateJobQuery, [jobId], (err) => {
                 if (err) {
                   console.error("Error updating job status:", err);
+                  return res
+                    .status(500)
+                    .json({ error: "Error updating job status" });
                 }
                 res.redirect("/dashboard");
               });
@@ -1380,33 +1408,36 @@ app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
     return res.status(403).json({ error: "Unauthorized" });
   }
-
   const jobId = req.params.jobId;
   const { status, revision_notes } = req.body;
-
   // Verify this is the client's job
   const verifyQuery = `
-    SELECT * FROM jobs WHERE id = ? AND client_id = ?
+    SELECT j.*, ws.submission_text as submission_description, 
+           u.name as freelancer_name, b.amount as payment_amount
+    FROM jobs j
+    LEFT JOIN work_submissions ws ON j.id = ws.job_id
+    LEFT JOIN users u ON ws.freelancer_id = u.id
+    LEFT JOIN bids b ON j.id = b.job_id
+    WHERE j.id = ? AND j.client_id = ?
   `;
-
   connection.query(verifyQuery, [jobId, req.session.userId], (err, results) => {
     if (err || results.length === 0) {
       return res.status(403).json({ error: "Not authorized for this job" });
     }
-
+    const job = results[0];
     if (status === "approved") {
-      // Update job status to payment_pending
-      const updateQuery = `
-        UPDATE jobs SET status = 'payment_pending' WHERE id = ?
-      `;
-      connection.query(updateQuery, [jobId], (err) => {
-        if (err) {
-          return res.status(500).json({ error: "Error updating job status" });
-        }
-        res.redirect(`/jobs/${jobId}/payment`);
+      // Redirect to payment form with job details
+      res.render("payment-form", {
+        job: {
+          id: job.id,
+          title: job.title,
+          freelancer_name: job.freelancer_name,
+          payment_amount: job.payment_amount,
+        },
+        user: { id: req.session.userId },
       });
     } else if (status === "revision") {
-      // Create revision request
+      // Existing revision logic
       const revisionQuery = `
         INSERT INTO revision_requests (job_id, client_id, revision_notes)
         VALUES (?, ?, ?)
@@ -1422,8 +1453,8 @@ app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
           }
           // Update job status
           const updateQuery = `
-          UPDATE jobs SET status = 'revision' WHERE id = ?
-        `;
+            UPDATE jobs SET status = 'revision' WHERE id = ?
+          `;
           connection.query(updateQuery, [jobId], (err) => {
             if (err) {
               return res
@@ -1440,57 +1471,218 @@ app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
 
 // Route to process payment
 app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
+  // Ensure only client can process payment
   if (req.session.userType !== "client") {
-    return res.status(403).json({ error: "Unauthorized" });
+    req.session.errorMessage = "Only clients can process payments.";
+    return res.redirect("/dashboard");
   }
-
   const jobId = req.params.jobId;
   const { payment_method, transaction_id } = req.body;
-
-  // Verify job status and ownership
+  // Comprehensive verification query to check job details
   const verifyQuery = `
-    SELECT * FROM jobs WHERE id = ? AND client_id = ? AND status = 'payment_pending'
+      SELECT j.*, 
+             b.freelancer_id, 
+             b.amount as payment_amount, 
+             ws.id as submission_id,
+             u.name as freelancer_name
+      FROM jobs j
+      JOIN bids b ON j.id = b.job_id
+      JOIN users u ON b.freelancer_id = u.id
+      LEFT JOIN work_submissions ws ON j.id = ws.job_id
+      WHERE j.id = ? 
+      AND j.client_id = ? 
+      AND j.status = 'pending_review'
   `;
-
   connection.query(verifyQuery, [jobId, req.session.userId], (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(403).json({ error: "Invalid job or status" });
+    if (err) {
+      console.error("Verification Query Error:", err);
+      req.session.errorMessage =
+        "An error occurred while processing the payment.";
+      return res.redirect("/dashboard");
     }
-
+    if (results.length === 0) {
+      req.session.errorMessage = "Invalid job or job is not ready for payment.";
+      return res.redirect("/dashboard");
+    }
     const job = results[0];
-
-    // Create payment record
+    // Insert payment record
     const paymentQuery = `
-      INSERT INTO payments (job_id, amount, payment_method, transaction_id)
-      VALUES (?, ?, ?, ?)
-    `;
-
+          INSERT INTO payments (
+              job_id, 
+              client_id, 
+              freelancer_id, 
+              amount, 
+              status, 
+              payment_method, 
+              transaction_id
+          ) VALUES (?, ?, ?, ?, 'completed', ?, ?)
+      `;
     connection.query(
       paymentQuery,
-      [jobId, job.budget, payment_method, transaction_id],
+      [
+        jobId,
+        req.session.userId,
+        job.freelancer_id,
+        job.payment_amount,
+        payment_method,
+        transaction_id,
+      ],
       (err) => {
         if (err) {
-          return res.status(500).json({ error: "Error processing payment" });
+          console.error("Payment Insertion Error:", err);
+          req.session.errorMessage = "Failed to record payment.";
+          return res.redirect("/dashboard");
         }
-
-        // Update job status to completed
-        const updateQuery = `
-        UPDATE jobs SET status = 'completed' WHERE id = ?
-      `;
-
-        connection.query(updateQuery, [jobId], (err) => {
+        // Update job status to completed and mark as paid
+        const updateJobQuery = `
+                  UPDATE jobs 
+                  SET 
+                      status = 'completed', 
+                      paid = 1, 
+                      completion_notes = 'Payment processed successfully',
+                      updated_at = NOW() 
+                  WHERE id = ?
+              `;
+        connection.query(updateJobQuery, [jobId], (err) => {
           if (err) {
-            return res.status(500).json({ error: "Error updating job status" });
+            console.error("Job Update Error:", err);
+            req.session.errorMessage =
+              "Payment processed, but job status update failed.";
+            return res.redirect("/dashboard");
           }
-
-          res.redirect("/dashboard");
+          // Update work submission status
+          const updateSubmissionQuery = `
+                      UPDATE work_submissions 
+                      SET 
+                          status = 'approved', 
+                          rating = 100 
+                      WHERE job_id = ?
+                  `;
+          connection.query(updateSubmissionQuery, [jobId], (err) => {
+            if (err) {
+              console.error("Submission Update Error:", err);
+              req.session.errorMessage =
+                "Payment processed, but submission update failed.";
+              return res.redirect("/dashboard");
+            }
+            // Create a success review automatically
+            const createReviewQuery = `
+                          INSERT INTO reviews (
+                              job_id, 
+                              reviewer_id, 
+                              reviewee_id, 
+                              rating, 
+                              comment
+                          ) VALUES (?, ?, ?, ?, ?)
+                      `;
+            connection.query(
+              createReviewQuery,
+              [
+                jobId,
+                req.session.userId,
+                job.freelancer_id,
+                5,
+                "Automatic 5-star review for successful job completion",
+              ],
+              (err) => {
+                if (err) {
+                  console.error("Review Creation Error:", err);
+                }
+                req.session.successMessage = `Payment processed successfully for job "${job.title}"!`;
+                res.redirect("/dashboard");
+              }
+            );
+          });
         });
       }
     );
   });
 });
 
-//end
+//additional routes
+
+// Add routes for handling client review and payment
+app.post("/submissions/:submissionId/approve", isAuthenticated, (req, res) => {
+  if (req.session.userType !== "client") {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const submissionId = req.params.submissionId;
+  // Update submission and job status
+  connection.query(
+    `UPDATE work_submissions SET status = 'approved' WHERE id = ?;
+     UPDATE jobs j 
+     JOIN work_submissions ws ON j.id = ws.job_id 
+     SET j.status = 'pending_payment' 
+     WHERE ws.id = ?;`,
+    [submissionId, submissionId],
+    (err) => {
+      if (err) {
+        console.error("Error approving submission:", err);
+        return res.status(500).json({ error: "Error approving submission" });
+      }
+      res.redirect("/dashboard");
+    }
+  );
+});
+
+app.post("/submissions/:submissionId/revision", isAuthenticated, (req, res) => {
+  if (req.session.userType !== "client") {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const submissionId = req.params.submissionId;
+  const { revision_notes } = req.body;
+  // Create revision request and update statuses
+  connection.query(
+    `UPDATE work_submissions SET status = 'revision_requested' WHERE id = ?;
+     INSERT INTO revision_requests (job_id, client_id, revision_notes)
+     SELECT ws.job_id, j.client_id, ?
+     FROM work_submissions ws
+     JOIN jobs j ON ws.job_id = j.id
+     WHERE ws.id = ?;`,
+    [submissionId, revision_notes, submissionId],
+    (err) => {
+      if (err) {
+        console.error("Error requesting revision:", err);
+        return res.status(500).json({ error: "Error requesting revision" });
+      }
+      res.redirect("/dashboard");
+    }
+  );
+});
+
+//end of them
+
+//added this
+
+// Add this route to your Express backend
+app.get("/jobs/:jobId/payment-form", isAuthenticated, (req, res) => {
+  if (req.session.userType !== "client") {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const jobId = req.params.jobId;
+  // Fetch job details to display in the form
+  const query = `
+    SELECT j.*, u.name as freelancer_name 
+    FROM jobs j
+    JOIN users u ON j.freelancer_id = u.id
+    WHERE j.id = ? AND j.client_id = ? AND j.status = 'payment_pending'
+  `;
+  connection.query(query, [jobId, req.session.userId], (err, results) => {
+    if (err || results.length === 0) {
+      return res.redirect("/dashboard");
+    }
+    res.render("payment-form", {
+      job: results[0],
+      user: {
+        id: req.session.userId,
+        name: req.session.userName,
+        email: req.session.userEmail,
+      },
+    });
+  });
+});
+
+//end of it
 
 //error
 // app.get("*", (req, res) => {
