@@ -47,6 +47,17 @@ const isAuthenticated = (req, res, next) => {
     res.redirect("/login");
   }
 };
+// Admin middleware
+const isAdmin = (req, res, next) => {
+  if (req.session.userType === "admin") {
+    next();
+  } else {
+    res.status(403).render("error", {
+      message: "Access Denied. Admin privileges required.",
+      user: req.session.userId ? { id: req.session.userId } : null,
+    });
+  }
+};
 
 //bid_images
 const bidStorage = multer.diskStorage({
@@ -91,6 +102,7 @@ const storage = multer.diskStorage({
     let destinationPath;
     switch (file.fieldname) {
       case "profileImage":
+      case "profile_picture":
         destinationPath = "public/uploads/profiles/";
         break;
       case "gigImage":
@@ -99,7 +111,7 @@ const storage = multer.diskStorage({
       case "serviceImage":
         destinationPath = "public/uploads/services/";
         break;
-      case "gig_images": // Add this case
+      case "gig_images":
         destinationPath = "public/uploads/gig_images/";
         break;
       default:
@@ -113,7 +125,7 @@ const storage = multer.diskStorage({
         ? "profile-"
         : file.fieldname === "serviceImage"
         ? "service-"
-        : file.fieldname === "gig_images" // Add this condition
+        : file.fieldname === "gig_images"
         ? "gig-"
         : "";
     cb(null, prefix + Date.now() + path.extname(file.originalname));
@@ -455,10 +467,19 @@ app.post("/login", (req, res) => {
       }
       req.session.userId = user.id;
       req.session.userType = user.user_type;
-      res.redirect("/dashboard");
+
+      // Redirect to appropriate dashboard based on user type
+      if (user.user_type === "admin") {
+        res.redirect("/admin/dashboard");
+      } else if (user.user_type === "freelancer") {
+        res.redirect("/dashboard");
+      } else if (user.user_type === "client") {
+        res.redirect("/dashboard");
+      }
     });
   });
 });
+
 //register
 app.get("/register", (req, res) => {
   res.render("register", { user: null });
@@ -1186,7 +1207,6 @@ app.get("/services/create", isAuthenticated, (req, res) => {
 });
 // Create new service
 app.post("/services/create", isAuthenticated, (req, res) => {
-  // Specifying single file upload for the `serviceImage` field
   upload.single("serviceImage")(req, res, (err) => {
     if (err) {
       console.error(err);
@@ -1304,7 +1324,7 @@ app.post(
       return res.status(403).json({ error: "Unauthorized" });
     }
     const jobId = req.params.jobId;
-    const { description } = req.body; // Changed from submission_text to match the form
+    const { description } = req.body;
     const files = req.files;
     // First, verify this freelancer is assigned to this job
     const verifyQuery = `
@@ -1333,7 +1353,7 @@ app.post(
     `;
         connection.query(
           submissionQuery,
-          [jobId, req.session.userId, description], // Using description from form
+          [jobId, req.session.userId, description],
           (err, result) => {
             if (err) {
               console.error("Submission error:", err);
@@ -1342,7 +1362,6 @@ app.post(
                 .json({ error: "Error creating submission" });
             }
             const submissionId = result.insertId;
-            // Handle file uploads if any
             if (files && files.length > 0) {
               const filePromises = files.map((file) => {
                 return new Promise((resolve, reject) => {
@@ -1598,60 +1617,6 @@ app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
     );
   });
 });
-
-//additional routes
-
-// Add routes for handling client review and payment
-app.post("/submissions/:submissionId/approve", isAuthenticated, (req, res) => {
-  if (req.session.userType !== "client") {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
-  const submissionId = req.params.submissionId;
-  // Update submission and job status
-  connection.query(
-    `UPDATE work_submissions SET status = 'approved' WHERE id = ?;
-     UPDATE jobs j 
-     JOIN work_submissions ws ON j.id = ws.job_id 
-     SET j.status = 'pending_payment' 
-     WHERE ws.id = ?;`,
-    [submissionId, submissionId],
-    (err) => {
-      if (err) {
-        console.error("Error approving submission:", err);
-        return res.status(500).json({ error: "Error approving submission" });
-      }
-      res.redirect("/dashboard");
-    }
-  );
-});
-
-app.post("/submissions/:submissionId/revision", isAuthenticated, (req, res) => {
-  if (req.session.userType !== "client") {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
-  const submissionId = req.params.submissionId;
-  const { revision_notes } = req.body;
-  // Create revision request and update statuses
-  connection.query(
-    `UPDATE work_submissions SET status = 'revision_requested' WHERE id = ?;
-     INSERT INTO revision_requests (job_id, client_id, revision_notes)
-     SELECT ws.job_id, j.client_id, ?
-     FROM work_submissions ws
-     JOIN jobs j ON ws.job_id = j.id
-     WHERE ws.id = ?;`,
-    [submissionId, revision_notes, submissionId],
-    (err) => {
-      if (err) {
-        console.error("Error requesting revision:", err);
-        return res.status(500).json({ error: "Error requesting revision" });
-      }
-      res.redirect("/dashboard");
-    }
-  );
-});
-
-//end of them
-
 //added this
 
 // Add this route to your Express backend
@@ -1683,6 +1648,253 @@ app.get("/jobs/:jobId/payment-form", isAuthenticated, (req, res) => {
 });
 
 //end of it
+// Admin dashboard route
+app.get("/admin/dashboard", isAuthenticated, isAdmin, (req, res) => {
+  // Fetch total users, jobs, and services
+  const queries = {
+    userCount:
+      "SELECT COUNT(*) as count, user_type FROM users GROUP BY user_type",
+    jobCount: "SELECT COUNT(*) as count, status FROM jobs GROUP BY status",
+    serviceCount:
+      "SELECT COUNT(*) as count, status FROM services GROUP BY status",
+  };
+  // Use Promise.all to handle multiple async queries
+  Promise.all(
+    Object.keys(queries).map((key) => {
+      return new Promise((resolve, reject) => {
+        connection.query(queries[key], (err, queryResults) => {
+          if (err) {
+            console.error(`Error fetching ${key}:`, err);
+            resolve([]);
+          } else {
+            resolve(queryResults);
+          }
+        });
+      });
+    })
+  )
+    .then(([userCount, jobCount, serviceCount]) => {
+      res.render("admin-dashboard", {
+        user: { id: req.session.userId },
+        userCount,
+        jobCount,
+        serviceCount,
+      });
+    })
+    .catch((err) => {
+      console.error("Dashboard query error:", err);
+      res.status(500).render("error", {
+        message: "Error loading dashboard",
+        user: req.session.userId ? { id: req.session.userId } : null,
+      });
+    });
+});
+// Route to manage users
+app.get("/admin/users", isAuthenticated, isAdmin, (req, res) => {
+  connection.query("SELECT * FROM users", (err, users) => {
+    if (err) {
+      return res.status(500).json({ error: "Error fetching users" });
+    }
+    res.render("admin-users", {
+      users,
+      user: { id: req.session.userId },
+    });
+  });
+});
+// Route to delete a user
+app.post(
+  "/admin/users/delete/:userId",
+  isAuthenticated,
+  isAdmin,
+  (req, res) => {
+    const userId = req.params.userId;
+    connection.beginTransaction((err) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ error: "Transaction start failed", details: err.message });
+      }
+      const deleteQueries = [
+        // Delete submission files first
+        "DELETE FROM submission_files WHERE submission_id IN (SELECT id FROM work_submissions WHERE freelancer_id = ?)",
+        // Delete messages involving this user
+        "DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?",
+        // Delete bids
+        "DELETE FROM bids WHERE freelancer_id = ?",
+        // Delete jobs associated with this user as a client
+        "DELETE FROM jobs WHERE client_id = ?",
+        // Delete work submissions
+        "DELETE FROM work_submissions WHERE freelancer_id = ?",
+        // Delete services
+        "DELETE FROM services WHERE seller_id = ?",
+        // Finally delete the user
+        "DELETE FROM users WHERE id = ?",
+      ];
+      const executeDeleteQueries = (queries, index) => {
+        if (index >= queries.length) {
+          connection.commit((commitErr) => {
+            if (commitErr) {
+              return connection.rollback(() => {
+                console.error("Commit failed:", commitErr);
+                res.status(500).json({
+                  error: "Commit failed",
+                  details: commitErr.message,
+                });
+              });
+            }
+            req.session.successMessage = "User deleted successfully";
+            res.redirect("/admin/users");
+          });
+          return;
+        }
+        // For messages query, we need to pass the userId twice due to OR condition
+        const queryParams = queries[index].includes("messages")
+          ? [userId, userId]
+          : [userId];
+        connection.query(queries[index], queryParams, (queryErr) => {
+          if (queryErr) {
+            return connection.rollback(() => {
+              console.error(
+                `Delete query failed for ${queries[index]}:`,
+                queryErr
+              );
+              res.status(500).json({
+                error: "Delete failed",
+                details: queryErr.message,
+                query: queries[index],
+              });
+            });
+          }
+          executeDeleteQueries(queries, index + 1);
+        });
+      };
+      // Start executing delete queries
+      executeDeleteQueries(deleteQueries, 0);
+    });
+  }
+);
+// Route to manage jobs
+app.get("/admin/jobs", isAuthenticated, isAdmin, (req, res) => {
+  connection.query(
+    `
+    SELECT j.*, u.name as client_name 
+    FROM jobs j
+    JOIN users u ON j.client_id = u.id
+  `,
+    (err, jobs) => {
+      if (err) {
+        return res.status(500).json({ error: "Error fetching jobs" });
+      }
+      res.render("admin-jobs", {
+        jobs,
+        user: { id: req.session.userId },
+      });
+    }
+  );
+});
+// Route to delete a job
+app.post("/admin/jobs/delete/:jobId", isAuthenticated, isAdmin, (req, res) => {
+  const jobId = req.params.jobId;
+  connection.beginTransaction((err) => {
+    if (err) {
+      console.error("Transaction start error:", err);
+      return res.status(500).json({ error: "Transaction error" });
+    }
+    const deleteQueries = [
+      "DELETE FROM messages WHERE job_id = ?",
+      "DELETE FROM bids WHERE job_id = ?",
+      "DELETE FROM job_images WHERE job_id = ?",
+      "DELETE FROM work_submissions WHERE job_id = ?",
+      "DELETE FROM jobs WHERE id = ?",
+    ];
+    const executeDeleteQueries = (queries, index) => {
+      if (index >= queries.length) {
+        connection.commit((err) => {
+          if (err) {
+            console.error("Commit error:", err);
+            return connection.rollback(() => {
+              res.status(500).json({ error: "Commit failed" });
+            });
+          }
+          req.session.successMessage = "Job deleted successfully";
+          res.redirect("/admin/jobs");
+        });
+        return;
+      }
+      connection.query(queries[index], [jobId], (err) => {
+        if (err) {
+          console.error(`Error in delete query ${index}:`, err);
+          return connection.rollback(() => {
+            res.status(500).json({ error: "Delete failed" });
+          });
+        }
+        executeDeleteQueries(queries, index + 1);
+      });
+    };
+    executeDeleteQueries(deleteQueries, 0);
+  });
+});
+// Route to manage services
+app.get("/admin/services", isAuthenticated, isAdmin, (req, res) => {
+  connection.query(
+    `
+    SELECT s.*, u.name as seller_name 
+    FROM services s
+    JOIN users u ON s.seller_id = u.id
+  `,
+    (err, services) => {
+      if (err) {
+        return res.status(500).json({ error: "Error fetching services" });
+      }
+      res.render("admin-services", {
+        services,
+        user: { id: req.session.userId },
+      });
+    }
+  );
+});
+// Route to delete a service
+app.post(
+  "/admin/services/delete/:serviceId",
+  isAuthenticated,
+  isAdmin,
+  (req, res) => {
+    const serviceId = req.params.serviceId;
+    connection.beginTransaction((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Transaction error" });
+      }
+      const deleteQueries = [
+        "DELETE FROM service_transactions WHERE service_id = ?",
+        "DELETE FROM service_messages WHERE service_id = ?",
+        "DELETE FROM services WHERE id = ?",
+      ];
+      const executeDeleteQueries = (queries, index) => {
+        if (index >= queries.length) {
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => {
+                res.status(500).json({ error: "Commit failed" });
+              });
+            }
+            req.session.successMessage = "Service deleted successfully";
+            res.redirect("/admin/services");
+          });
+          return;
+        }
+        connection.query(queries[index], [serviceId], (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              res.status(500).json({ error: "Delete failed" });
+            });
+          }
+          executeDeleteQueries(queries, index + 1);
+        });
+      };
+      executeDeleteQueries(deleteQueries, 0);
+    });
+  }
+);
 
 //error
 // app.get("*", (req, res) => {

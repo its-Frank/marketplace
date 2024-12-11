@@ -1,0 +1,52 @@
+<%- include('_header') %>
+<div class="container mt-5">
+  <h1 class="mb-4">Admin Dashboard</h1>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">User Statistics</div>
+        <div class="card-body">
+          <% userCount.forEach(stat => { %>
+          <p><strong><%= stat.user_type %>:</strong> <%= stat.count %></p>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Job Statistics</div>
+        <div class="card-body">
+          <% jobCount.forEach(stat => { %>
+          <p><strong><%= stat.status %>:</strong> <%= stat.count %></p>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Service Statistics</div>
+        <div class="card-body">
+          <% serviceCount.forEach(stat => { %>
+          <p><strong><%= stat.status %>:</strong> <%= stat.count %></p>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-4">
+      <a href="/admin/users" class="btn btn-primary btn-block">Manage Users</a>
+    </div>
+    <div class="col-md-4">
+      <a href="/admin/jobs" class="btn btn-secondary btn-block">Manage Jobs</a>
+    </div>
+    <div class="col-md-4">
+      <a href="/admin/services" class="btn btn-info btn-block"
+        >Manage Services</a
+      >
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

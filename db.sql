@@ -212,3 +212,11 @@ ALTER TABLE jobs ADD COLUMN paid BOOLEAN DEFAULT FALSE;
 -- work submissions
 ALTER TABLE work_submissions
 ADD COLUMN rating INT;
+
+-- added admin to users table
+ALTER TABLE users 
+MODIFY COLUMN user_type ENUM('freelancer', 'client', 'admin') NOT NULL;
+
+-- admin details
+INSERT INTO users (name, email, password, user_type) VALUES 
+('Admin', 'admin@marketplace.com', '6892frank', 'admin');
