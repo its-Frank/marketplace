@@ -733,14 +733,12 @@ app.post(
     SET name = ?, email = ?, location = ?, bio = ?
   `;
     let queryParams = [name, email, location, bio];
-    // If a new profile picture was uploaded, add it to the update query
     if (req.file) {
       updateQuery += `, profile_picture = ?`;
       queryParams.push(`/uploads/profiles/${req.file.filename}`);
     }
     updateQuery += ` WHERE id = ?`;
     queryParams.push(req.session.userId);
-    // First check if email is already taken (excluding current user)
     connection.query(
       "SELECT id FROM users WHERE email = ? AND id != ?",
       [email, req.session.userId],
@@ -753,7 +751,6 @@ app.post(
           req.session.errorMessage = "Email is already taken.";
           return res.redirect("/client/editclient-profile");
         }
-        // If email is available, proceed with update
         connection.query(updateQuery, queryParams, (err, result) => {
           if (err) {
             req.session.errorMessage =
@@ -783,7 +780,6 @@ app.get("/edit-profile", isAuthenticated, (req, res) => {
     });
   });
 });
-
 // Route to handle profile updates
 app.post("/edit-profile", isAuthenticated, (req, res) => {
   if (req.session.userType !== "freelancer") {
@@ -819,7 +815,6 @@ app.get("/logout", (req, res) => {
 // Route to show message creation form
 app.get("/messages/create/:receiverId", isAuthenticated, (req, res) => {
   const receiverId = req.params.receiverId;
-  // Get receiver details
   const query = "SELECT name FROM users WHERE id = ?";
   connection.query(query, [receiverId], (err, results) => {
     if (err || results.length === 0) {
@@ -871,7 +866,6 @@ app.post("/messages/mark-read/:messageId", isAuthenticated, (req, res) => {
     res.json({ success: true });
   });
 });
-
 // Route to show reply form
 app.get("/messages/reply/:messageId", isAuthenticated, (req, res) => {
   const messageId = req.params.messageId;
@@ -905,7 +899,6 @@ app.get("/messages/reply/:messageId", isAuthenticated, (req, res) => {
 app.post("/messages/reply/:messageId", isAuthenticated, (req, res) => {
   const messageId = req.params.messageId;
   const { content } = req.body;
-  // First get the original message to know who to send the reply to
   const query = `
     SELECT sender_id, job_id
     FROM messages
@@ -917,7 +910,6 @@ app.post("/messages/reply/:messageId", isAuthenticated, (req, res) => {
     }
     const originalMessage = results[0];
     const receiverId = originalMessage.sender_id;
-    // Insert the reply
     const insertQuery = `
       INSERT INTO messages (sender_id, receiver_id, job_id, content)
       VALUES (?, ?, ?, ?)
@@ -972,7 +964,6 @@ app.get("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
     return res.redirect("/dashboard");
   }
   const freelancerId = req.params.freelancerId;
-  // Get freelancer details and client's active jobs
   const queries = {
     freelancer: "SELECT name FROM users WHERE id = ?",
     activeJobs:
@@ -1013,7 +1004,6 @@ app.post("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
   }
   const freelancerId = req.params.freelancerId;
   const { jobId, message } = req.body;
-  // First, verify the job belongs to the client
   const checkJobQuery = "SELECT id FROM jobs WHERE id = ? AND client_id = ?";
   connection.query(
     checkJobQuery,
@@ -1022,7 +1012,6 @@ app.post("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
       if (err || results.length === 0) {
         return res.status(403).json({ error: "Unauthorized" });
       }
-      // Send invitation message
       const messageQuery = `
       INSERT INTO messages (sender_id, receiver_id, job_id, content)
       VALUES (?, ?, ?, ?)
@@ -1037,7 +1026,6 @@ app.post("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
           if (err) {
             return res.status(500).json({ error: "Error sending invitation" });
           }
-          // Set the success message in session
           req.session.successMessage = "Invitation sent successfully!";
           res.redirect(`/freelancer/${freelancerId}`);
         }
@@ -1045,7 +1033,6 @@ app.post("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
     }
   );
 });
-
 //bid acceptance
 app.post("/bids/:bidId/accept", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
@@ -1053,12 +1040,10 @@ app.post("/bids/:bidId/accept", isAuthenticated, (req, res) => {
   }
   const bidId = req.params.bidId;
   const { requirements } = req.body;
-  // Start a transaction
   connection.beginTransaction((err) => {
     if (err) {
       return res.status(500).json({ error: "Error starting transaction" });
     }
-    // First, verify the bid belongs to a job owned by this client
     const verifyQuery = `
       SELECT b.*, j.client_id, j.id as job_id
       FROM bids b
@@ -1074,7 +1059,6 @@ app.post("/bids/:bidId/accept", isAuthenticated, (req, res) => {
           return res.status(403).json({ error: "Unauthorized" });
         }
         const bid = results[0];
-        // Update bid status to accepted
         const updateBidQuery =
           "UPDATE bids SET status = 'accepted' WHERE id = ?";
         connection.query(updateBidQuery, [bidId], (err) => {
@@ -1082,7 +1066,6 @@ app.post("/bids/:bidId/accept", isAuthenticated, (req, res) => {
             connection.rollback();
             return res.status(500).json({ error: "Error updating bid" });
           }
-          // Update job status to in_progress
           const updateJobQuery =
             "UPDATE jobs SET status = 'in_progress' WHERE id = ?";
           connection.query(updateJobQuery, [bid.job_id], (err) => {
@@ -1092,7 +1075,6 @@ app.post("/bids/:bidId/accept", isAuthenticated, (req, res) => {
                 .status(500)
                 .json({ error: "Error updating job status" });
             }
-            // Send message to freelancer with requirements
             const messageQuery = `
             INSERT INTO messages (sender_id, receiver_id, job_id, content)
             VALUES (?, ?, ?, ?)
@@ -1139,7 +1121,6 @@ app.post("/bids/:bidId/reject", isAuthenticated, (req, res) => {
   }
   const bidId = req.params.bidId;
   const { reason } = req.body;
-  // Verify bid belongs to client's job and update status
   const query = `
     UPDATE bids b
     JOIN jobs j ON b.job_id = j.id
@@ -1150,7 +1131,6 @@ app.post("/bids/:bidId/reject", isAuthenticated, (req, res) => {
     if (err) {
       return res.status(500).json({ error: "Error rejecting bid" });
     }
-    // Send rejection message to freelancer if reason provided
     if (reason) {
       const messageQuery = `
         INSERT INTO messages (sender_id, receiver_id, job_id, content)
@@ -1199,6 +1179,7 @@ app.get("/services", (req, res) => {
     }
   );
 });
+
 // Create service form
 app.get("/services/create", isAuthenticated, (req, res) => {
   res.render("service-create", {
@@ -1309,11 +1290,29 @@ app.post("/services/:id/process-payment", isAuthenticated, (req, res) => {
         console.error(error);
         return res.status(500).send("Server error");
       }
-      res.redirect("/services");
+      connection.query(
+        `
+        UPDATE services
+        SET status = 'sold'
+        WHERE id = (
+          SELECT service_id 
+          FROM service_transactions 
+          WHERE id = ?
+        )
+      `,
+        [transactionId],
+        (updateError) => {
+          if (updateError) {
+            console.error(updateError);
+            return res.status(500).send("Server error");
+          }
+
+          res.redirect("/services");
+        }
+      );
     }
   );
 });
-
 // Modified work submission route
 app.post(
   "/jobs/:jobId/submit",
@@ -1326,7 +1325,6 @@ app.post(
     const jobId = req.params.jobId;
     const { description } = req.body;
     const files = req.files;
-    // First, verify this freelancer is assigned to this job
     const verifyQuery = `
     SELECT j.*, b.freelancer_id 
     FROM jobs j
@@ -1421,7 +1419,6 @@ app.post(
     );
   }
 );
-
 // Route to handle client review
 app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
@@ -1490,26 +1487,24 @@ app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
 
 // Route to process payment
 app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
-  // Ensure only client can process payment
   if (req.session.userType !== "client") {
     req.session.errorMessage = "Only clients can process payments.";
     return res.redirect("/dashboard");
   }
   const jobId = req.params.jobId;
   const { payment_method, transaction_id } = req.body;
-  // Comprehensive verification query to check job details
   const verifyQuery = `
-      SELECT j.*, 
-             b.freelancer_id, 
-             b.amount as payment_amount, 
+      SELECT j.*,
+             b.freelancer_id,
+             b.amount as payment_amount,
              ws.id as submission_id,
              u.name as freelancer_name
       FROM jobs j
       JOIN bids b ON j.id = b.job_id
       JOIN users u ON b.freelancer_id = u.id
       LEFT JOIN work_submissions ws ON j.id = ws.job_id
-      WHERE j.id = ? 
-      AND j.client_id = ? 
+      WHERE j.id = ?
+      AND j.client_id = ?
       AND j.status = 'pending_review'
   `;
   connection.query(verifyQuery, [jobId, req.session.userId], (err, results) => {
@@ -1524,15 +1519,14 @@ app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
       return res.redirect("/dashboard");
     }
     const job = results[0];
-    // Insert payment record
     const paymentQuery = `
           INSERT INTO payments (
-              job_id, 
-              client_id, 
-              freelancer_id, 
-              amount, 
-              status, 
-              payment_method, 
+              job_id,
+              client_id,
+              freelancer_id,
+              amount,
+              status,
+              payment_method,
               transaction_id
           ) VALUES (?, ?, ?, ?, 'completed', ?, ?)
       `;
@@ -1552,14 +1546,13 @@ app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
           req.session.errorMessage = "Failed to record payment.";
           return res.redirect("/dashboard");
         }
-        // Update job status to completed and mark as paid
         const updateJobQuery = `
-                  UPDATE jobs 
-                  SET 
-                      status = 'completed', 
-                      paid = 1, 
+                  UPDATE jobs
+                  SET
+                      status = 'completed',
+                      paid = 1,
                       completion_notes = 'Payment processed successfully',
-                      updated_at = NOW() 
+                      updated_at = NOW()
                   WHERE id = ?
               `;
         connection.query(updateJobQuery, [jobId], (err) => {
@@ -1569,12 +1562,11 @@ app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
               "Payment processed, but job status update failed.";
             return res.redirect("/dashboard");
           }
-          // Update work submission status
           const updateSubmissionQuery = `
-                      UPDATE work_submissions 
-                      SET 
-                          status = 'approved', 
-                          rating = 100 
+                      UPDATE work_submissions
+                      SET
+                          status = 'approved',
+                          rating = 100
                       WHERE job_id = ?
                   `;
           connection.query(updateSubmissionQuery, [jobId], (err) => {
@@ -1584,13 +1576,12 @@ app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
                 "Payment processed, but submission update failed.";
               return res.redirect("/dashboard");
             }
-            // Create a success review automatically
             const createReviewQuery = `
                           INSERT INTO reviews (
-                              job_id, 
-                              reviewer_id, 
-                              reviewee_id, 
-                              rating, 
+                              job_id,
+                              reviewer_id,
+                              reviewee_id,
+                              rating,
                               comment
                           ) VALUES (?, ?, ?, ?, ?)
                       `;
@@ -1617,9 +1608,7 @@ app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
     );
   });
 });
-//added this
-
-// Add this route to your Express backend
+//jobs payment form
 app.get("/jobs/:jobId/payment-form", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
     return res.status(403).json({ error: "Unauthorized" });
@@ -1647,10 +1636,8 @@ app.get("/jobs/:jobId/payment-form", isAuthenticated, (req, res) => {
   });
 });
 
-//end of it
 // Admin dashboard route
 app.get("/admin/dashboard", isAuthenticated, isAdmin, (req, res) => {
-  // Fetch total users, jobs, and services
   const queries = {
     userCount:
       "SELECT COUNT(*) as count, user_type FROM users GROUP BY user_type",
@@ -1658,7 +1645,6 @@ app.get("/admin/dashboard", isAuthenticated, isAdmin, (req, res) => {
     serviceCount:
       "SELECT COUNT(*) as count, status FROM services GROUP BY status",
   };
-  // Use Promise.all to handle multiple async queries
   Promise.all(
     Object.keys(queries).map((key) => {
       return new Promise((resolve, reject) => {
@@ -1747,7 +1733,6 @@ app.post(
           });
           return;
         }
-        // For messages query, we need to pass the userId twice due to OR condition
         const queryParams = queries[index].includes("messages")
           ? [userId, userId]
           : [userId];
@@ -1834,24 +1819,44 @@ app.post("/admin/jobs/delete/:jobId", isAuthenticated, isAdmin, (req, res) => {
     executeDeleteQueries(deleteQueries, 0);
   });
 });
+
 // Route to manage services
 app.get("/admin/services", isAuthenticated, isAdmin, (req, res) => {
-  connection.query(
-    `
+  const servicesQuery = `
     SELECT s.*, u.name as seller_name 
     FROM services s
     JOIN users u ON s.seller_id = u.id
-  `,
-    (err, services) => {
-      if (err) {
-        return res.status(500).json({ error: "Error fetching services" });
-      }
+  `;
+  const sellersQuery = `
+    SELECT id, name 
+    FROM users 
+    WHERE user_type = 'freelancer'
+  `;
+  Promise.all([
+    new Promise((resolve, reject) => {
+      connection.query(servicesQuery, (err, services) => {
+        if (err) reject(err);
+        resolve(services);
+      });
+    }),
+    new Promise((resolve, reject) => {
+      connection.query(sellersQuery, (err, sellers) => {
+        if (err) reject(err);
+        resolve(sellers);
+      });
+    }),
+  ])
+    .then(([services, sellers]) => {
       res.render("admin-services", {
         services,
+        sellers,
         user: { id: req.session.userId },
       });
-    }
-  );
+    })
+    .catch((err) => {
+      console.error("Error fetching services or sellers:", err);
+      res.status(500).json({ error: "Error fetching services" });
+    });
 });
 // Route to delete a service
 app.post(
@@ -1860,21 +1865,29 @@ app.post(
   isAdmin,
   (req, res) => {
     const serviceId = req.params.serviceId;
+    console.log(`Attempting to delete service with ID: ${serviceId}`);
     connection.beginTransaction((err) => {
       if (err) {
-        return res.status(500).json({ error: "Transaction error" });
+        console.error("Transaction start error:", err);
+        return res.status(500).json({
+          error: "Transaction error",
+          details: err.message,
+        });
       }
       const deleteQueries = [
         "DELETE FROM service_transactions WHERE service_id = ?",
-        "DELETE FROM service_messages WHERE service_id = ?",
         "DELETE FROM services WHERE id = ?",
       ];
       const executeDeleteQueries = (queries, index) => {
         if (index >= queries.length) {
-          connection.commit((err) => {
-            if (err) {
+          connection.commit((commitErr) => {
+            if (commitErr) {
+              console.error("Commit error:", commitErr);
               return connection.rollback(() => {
-                res.status(500).json({ error: "Commit failed" });
+                res.status(500).json({
+                  error: "Commit failed",
+                  details: commitErr.message,
+                });
               });
             }
             req.session.successMessage = "Service deleted successfully";
@@ -1882,17 +1895,57 @@ app.post(
           });
           return;
         }
-        connection.query(queries[index], [serviceId], (err) => {
-          if (err) {
+        connection.query(queries[index], [serviceId], (queryErr, result) => {
+          if (queryErr) {
+            console.error(`Error in delete query ${index}:`, queryErr);
             return connection.rollback(() => {
-              res.status(500).json({ error: "Delete failed" });
+              res.status(500).json({
+                error: "Delete failed",
+                details: queryErr.message,
+                query: queries[index],
+                serviceId: serviceId,
+              });
             });
           }
+          console.log(`Query ${index} affected ${result.affectedRows} rows`);
           executeDeleteQueries(queries, index + 1);
         });
       };
       executeDeleteQueries(deleteQueries, 0);
     });
+  }
+);
+// Route to add a new service
+app.post(
+  "/admin/services/create",
+  isAuthenticated,
+  isAdmin,
+  upload.single("serviceImage"),
+  (req, res) => {
+    const { title, description, price, seller_id } = req.body;
+    const newService = {
+      title,
+      description,
+      price,
+      seller_id,
+      created_at: new Date(),
+    };
+    if (req.file) {
+      newService.image_path = `/uploads/services/${req.file.filename}`;
+    }
+    connection.query(
+      "INSERT INTO services SET ?",
+      newService,
+      (err, result) => {
+        if (err) {
+          console.error("Error adding service:", err);
+          req.session.errorMessage = "Failed to add service";
+          return res.redirect("/admin/services");
+        }
+        req.session.successMessage = "Service added successfully";
+        res.redirect("/admin/services");
+      }
+    );
   }
 );
 

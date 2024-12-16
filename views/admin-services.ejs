@@ -1,127 +1,111 @@
 <%- include('_header') %>
 <div class="container mt-5">
   <h1 class="mb-4">Service Management</h1>
-
   <% if (locals.successMessage) { %>
-  <div class="alert alert-success" role="alert"><%= successMessage %></div>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= successMessage %>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
   <% } %>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Seller</th>
-        <th>Status</th>
-        <th>Price</th>
-        <th>Category</th>
-        <th>Description</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (services && services.length > 0) { %> <%
-      services.forEach(function(service) { %>
-      <tr>
-        <td><%= service.id %></td>
-        <td><%= service.title %></td>
-        <td><%= service.seller_name %></td>
-        <td><%= service.status %></td>
-        <td>$<%= service.price.toFixed(2) %></td>
-        <td><%= service.category %></td>
-        <td>
-          <% if (service.description) { %> <%= service.description.length > 50 ?
-          service.description.substring(0, 50) + '...' : service.description %>
-          <% } else { %> N/A <% } %>
-        </td>
-        <td>
-          <div class="btn-group" role="group">
-            <button
-              type="button"
-              class="btn btn-info btn-sm"
-              data-toggle="modal"
-              data-target="#serviceDetailsModal<%= service.id %>"
-            >
-              View
-            </button>
-            <form
-              action="/admin/services/delete/<%= service.id %>"
-              method="POST"
-              style="display: inline"
-            >
-              <button
-                type="submit"
-                class="btn btn-danger btn-sm"
-                onclick="return confirm('Are you sure you want to delete this service?')"
-              >
-                Delete
-              </button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      <!-- Modal for Service Details -->
-      <div
-        class="modal fade"
-        id="serviceDetailsModal<%= service.id %>"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="serviceDetailsLabel<%= service.id %>"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="serviceDetailsLabel<%= service.id %>">
-                Service Details
-              </h5>
-              <button
-                type="button"
-                class="close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <p><strong>ID:</strong> <%= service.id %></p>
-              <p><strong>Title:</strong> <%= service.title %></p>
-              <p><strong>Seller:</strong> <%= service.seller_name %></p>
-              <p><strong>Status:</strong> <%= service.status %></p>
-              <p><strong>Price:</strong> $<%= service.price.toFixed(2) %></p>
-              <p><strong>Category:</strong> <%= service.category %></p>
-              <p>
-                <strong>Description:</strong> <%= service.description || 'No
-                description provided' %>
-              </p>
-              <p>
-                <strong>Created At:</strong> <%= service.created_at ? new
-                Date(service.created_at).toLocaleString() : 'N/A' %>
-              </p>
-            </div>
-          </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          Current Services
+        </div>
+        <div class="card-body">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Seller</th>
+                <th>Description</th>
+                <th>Price (KES)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% services.forEach(service => { %>
+              <tr>
+                <td>
+                  <% if (service.image_path) { %>
+                  <img
+                    src="<%= service.image_path %>"
+                    alt="Service Image"
+                    style="max-width: 100px; max-height: 100px"
+                  />
+                  <% } else { %> No Image <% } %>
+                </td>
+                <td><%= service.title %></td>
+                <td><%= service.seller_name %></td>
+                <td><%= service.description %></td>
+                <td>KES <%= service.price.toFixed(2) %></td>
+                <td>
+                  <form
+                    action="/admin/services/delete/<%= service.id %>"
+                    method="POST"
+                    class="d-inline delete-service-form"
+                  >
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
         </div>
       </div>
-      <% }); %> <% } else { %>
-      <tr>
-        <td colspan="8" class="text-center">No services found.</td>
-      </tr>
-      <% } %>
-    </tbody>
-  </table>
+    </div>
+  </div>
 </div>
-<%- include('_footer') %>
+<!-- Add Service Modal -->
 
 <script>
+  // Form validation script
+  (function () {
+    "use strict";
+    window.addEventListener(
+      "load",
+      function () {
+        var forms = document.getElementsByClassName("needs-validation");
+        var validation = Array.prototype.filter.call(forms, function (form) {
+          form.addEventListener(
+            "submit",
+            function (event) {
+              if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+              form.classList.add("was-validated");
+            },
+            false
+          );
+        });
+      },
+      false
+    );
+  })();
+  // Delete confirmation
   document.addEventListener("DOMContentLoaded", function () {
-    // Example: Confirm before deleting a service
-    const deleteButtons = document.querySelectorAll(".btn-danger");
-    deleteButtons.forEach((button) => {
-      button.addEventListener("click", function (e) {
-        if (!confirm("Are you sure you want to delete this service?")) {
+    const deleteForms = document.querySelectorAll(".delete-service-form");
+    deleteForms.forEach((form) => {
+      form.addEventListener("submit", function (e) {
+        if (
+          !confirm(
+            "Are you sure you want to delete this service? This action cannot be undone."
+          )
+        ) {
           e.preventDefault();
         }
       });
     });
   });
 </script>
+<%- include('_footer') %>
