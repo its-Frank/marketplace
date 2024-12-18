@@ -15,16 +15,25 @@
     />
     <style>
       .hero {
-        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-          url("/images/adobe.jpg");
         background-size: cover;
         background-position: center;
-        height: 70vh;
+        height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
         text-align: center;
+      }
+      .custom-about-image {
+        max-width: 450px;
+        height: auto;
+      }
+      .small-image {
+        max-width: 150px;
+        height: auto;
+      }
+      .footerabout a {
+        text-decoration: none;
       }
     </style>
   </head>
@@ -70,19 +79,39 @@
         </div>
       </div>
     </nav>
-    <div class="hero">
+
+    <!-- Hero Section -->
+    <div
+      class="hero"
+      style="background-image: url('/images/laptop.jpg')"
+      class="d-flex align-items-center justify-content-center text-center"
+      style="
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
+        color: white;
+      "
+    >
       <div class="container">
         <h1 class="display-4">Connect with Top Kenyan Talent</h1>
         <p class="lead">
           Find freelance opportunities or hire skilled professionals for your
-          projects
+          projects.
         </p>
-        <a href="/register" class="btn btn-primary btn-lg">Get Started</a>
+        <a href="/register" class="btn btn-light btn-lg">Get Started</a>
       </div>
     </div>
+    <!-- End of Hero Section -->
+
+    <!-- Explanation Section -->
     <div class="container mt-5">
-      <div class="row">
+      <div class="row text-center">
         <div class="col-md-4">
+          <img
+            src="/images/worker.png"
+            alt="For Freelancers"
+            class="img-fluid mb-3 rounded small-image"
+          />
           <h2>For Freelancers</h2>
           <p>
             Discover exciting projects and showcase your skills to clients
@@ -90,6 +119,11 @@
           </p>
         </div>
         <div class="col-md-4">
+          <img
+            src="/images/client.png"
+            alt="For Clients"
+            class="img-fluid mb-3 rounded small-image"
+          />
           <h2>For Clients</h2>
           <p>
             Find the perfect freelancer for your project from our pool of
@@ -97,6 +131,11 @@
           </p>
         </div>
         <div class="col-md-4">
+          <img
+            src="/images/secure.png"
+            alt="Secure Payments"
+            class="img-fluid mb-3 rounded small-image"
+          />
           <h2>Secure Payments</h2>
           <p>
             Use our escrow system and M-Pesa integration for safe and convenient
@@ -105,7 +144,247 @@
         </div>
       </div>
     </div>
+    <!-- End of Explanation Section -->
 
+    <!-- About Section -->
+    <section class="about_section py-5">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="img-box mb-4">
+              <img
+                src="/images/about.png"
+                alt="About Us"
+                class="img-fluid rounded custom-about-image"
+              />
+            </div>
+          </div>
+          <div class="col-md-6 text-md-left text-center">
+            <div class="detail-box">
+              <div class="heading_container mb-4">
+                <h2 class="font-weight-bold">About Us</h2>
+              </div>
+              <p class="mb-4">
+                Welcome to Kenya’s freelancer marketplace where we connect
+                skilled freelancers with clients seeking top-notch services. Our
+                mission is to empower individuals and businesses by creating
+                meaningful connections that foster growth and success.
+              </p>
+              <p class="mb-4">
+                Whether you are a freelancer looking to showcase your talents or
+                a client in need of expert assistance, we provide a
+                user-friendly platform tailored to your needs. We are committed
+                to supporting the freelancing community in Kenya and helping it
+                thrive.
+              </p>
+              <a href="/about" class="btn btn-primary">Read More</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- End About Section -->
+
+    <!-- Team Section -->
+    <section class="team_section layout_padding2-bottom py-5 bg-light">
+      <div class="container">
+        <div class="heading_container text-center mb-5">
+          <h2 class="font-weight-bold">Meet The Team</h2>
+          <p>
+            Our dedicated team is passionate about connecting freelancers with
+            clients, ensuring a seamless experience for everyone involved.
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="box text-center p-3 border rounded">
+              <div class="img-box mb-3">
+                <img
+                  src="/images/t-1.png"
+                  alt="Frank"
+                  class="img-fluid rounded-circle"
+                />
+              </div>
+              <div class="detail-box">
+                <h5 class="font-weight-bold">Frank</h5>
+                <p>
+                  As the co-founder of Kenyan Freelancer Marketplace, Frank is
+                  dedicated to empowering freelancers and ensuring client
+                  satisfaction. With a background in project management and
+                  years of experience in the freelancing industry, Yokit focuses
+                  on fostering strong relationships between clients and
+                  freelancers.
+                </p>
+                <div class="social_box">
+                  <a href="#"><img src="/images/fb.png" alt="Facebook" /></a>
+                  <a href="#"
+                    ><img src="/images/twitter.png" alt="Twitter"
+                  /></a>
+                  <a href="#"
+                    ><img src="/images/linkedin.png" alt="LinkedIn"
+                  /></a>
+                  <a href="#"
+                    ><img src="/images/insta.png" alt="Instagram"
+                  /></a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="box text-center p-3 border rounded">
+              <div class="img-box mb-3">
+                <img
+                  src="/images/t-2.png"
+                  alt="Morde Den"
+                  class="img-fluid rounded-circle"
+                />
+              </div>
+              <div class="detail-box">
+                <h5 class="font-weight-bold">Morde Den</h5>
+                <p>
+                  Morde brings a wealth of expertise in digital marketing to
+                  [Your Platform Name]. His passion for helping freelancers
+                  shine online is evident in every initiative he spearheads.
+                  Morde is committed to ensuring that both freelancers and
+                  clients have access to the resources they need to succeed.
+                </p>
+                <div class="social_box">
+                  <a href="#"><img src="/images/fb.png" alt="Facebook" /></a>
+                  <a href="#"
+                    ><img src="/images/twitter.png" alt="Twitter"
+                  /></a>
+                  <a href="#"
+                    ><img src="/images/linkedin.png" alt="LinkedIn"
+                  /></a>
+                  <a href="#"
+                    ><img src="/images/insta.png" alt="Instagram"
+                  /></a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="box text-center p-3 border rounded">
+              <div class="img-box mb-3">
+                <img
+                  src="/images/t-3.png"
+                  alt="Marry Doki"
+                  class="img-fluid rounded-circle"
+                />
+              </div>
+              <div class="detail-box">
+                <h5 class="font-weight-bold">Marry Doki</h5>
+                <p>
+                  Marry is our community manager who is passionate about
+                  building a supportive environment for all freelancers. With a
+                  focus on user engagement and satisfaction, she works
+                  tirelessly to enhance the experience on [Your Platform Name],
+                  making it the go-to place for freelancers and clients alike.
+                </p>
+                <div class="social_box">
+                  <a href="#"><img src="/images/fb.png" alt="Facebook" /></a>
+                  <a href="#"
+                    ><img src="/images/twitter.png" alt="Twitter"
+                  /></a>
+                  <a href="#"
+                    ><img src="/images/linkedin.png" alt="LinkedIn"
+                  /></a>
+                  <a href="#"
+                    ><img src="/images/insta.png" alt="Instagram"
+                  /></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- End Team Section -->
+
+    <!-- Testimonials Section -->
+    <section class="testimonials_section layout_padding py-5">
+      <div class="container">
+        <div class="heading_container text-center mb-5">
+          <h2 class="font-weight-bold">What Our Users Say</h2>
+          <p>
+            Hear from those who have experienced the power of connecting on
+            Kenyan Freelancer Marketplace.
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div
+              class="testimonial_box text-center p-4 border rounded bg-light"
+            >
+              <div class="img-box mb-3">
+                <img
+                  src="/images/user1.png"
+                  alt="User 1"
+                  class="img-fluid rounded-circle"
+                  style="width: 80px; height: 80px"
+                />
+              </div>
+              <p class="testimonial_text">
+                "As a freelancer, Kenyan Freelancer Marketplace has transformed
+                the way I connect with clients. The process is straightforward
+                and I love the variety of projects available."
+              </p>
+              <h5 class="font-weight-bold">John Doe</h5>
+              <span class="text-muted">Freelancer</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div
+              class="testimonial_box text-center p-4 border rounded bg-light"
+            >
+              <div class="img-box mb-3">
+                <img
+                  src="/images/manu.jpg"
+                  alt="User 2"
+                  class="img-fluid rounded-circle"
+                  style="width: 80px; height: 80px"
+                />
+              </div>
+              <p class="testimonial_text">
+                "Finding qualified freelancers has never been easier! I
+                appreciate how Kenyan Freelancer Marketplace allows me to access
+                talent from all over Kenya."
+              </p>
+              <h5 class="font-weight-bold">Manu Smith</h5>
+              <span class="text-muted">Client</span>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div
+              class="testimonial_box text-center p-4 border rounded bg-light"
+            >
+              <div class="img-box mb-3">
+                <img
+                  src="/images/vera.jpg"
+                  alt="User 3"
+                  class="img-fluid rounded-circle"
+                  style="width: 80px; height: 80px"
+                />
+              </div>
+              <p class="testimonial_text">
+                "I was skeptical at first, but the quality of work I've received
+                through Kenyan Freelancer Marketplace is outstanding. I’ll
+                definitely be using this platform again!"
+              </p>
+              <h5 class="font-weight-bold">Alice Mwende</h5>
+              <span class="text-muted">Client</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- End Testimonials Section -->
     <!-- question accordion -->
     <section id="questions" class="p-5">
       <div class="container">
@@ -254,11 +533,134 @@
         </div>
       </div>
     </section>
-    <footer class="bg-light mt-5 py-3">
+    <!-- Contact Section -->
+    <section
+      class="contact_section layout_padding py-5"
+      id="contactLink"
+      style="background-color: #05264a"
+    >
+      <div class="container">
+        <div class="heading_container text-center mb-4">
+          <h2 class="text-white">Contact Kenyan Freelancer Marketplace</h2>
+          <p class="text-white-50">
+            We'd love to hear from you. Send us a message and we'll get back to
+            you soon.
+          </p>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+            <form action="/contact" method="POST">
+              <div class="form-row">
+                <div class="form-group col-md-6 mb-3">
+                  <label for="inputName4" class="text-white">Full Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="inputName4"
+                    name="name"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+                <div class="form-group col-md-6 mb-3">
+                  <label for="inputEmail4" class="text-white"
+                    >Email Address</label
+                  >
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="inputEmail4"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="form-group mb-3">
+                <label for="inputSubject4" class="text-white">Subject</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="inputSubject4"
+                  name="subject"
+                  placeholder="Enter message subject"
+                  required
+                />
+              </div>
+              <div class="form-group mb-3">
+                <label for="inputMessage" class="text-white"
+                  >Your Message</label
+                >
+                <textarea
+                  class="form-control"
+                  id="inputMessage"
+                  name="message"
+                  placeholder="Write your message here"
+                  rows="5"
+                  required
+                ></textarea>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="inputPhone" class="text-white"
+                    >Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    id="inputPhone"
+                    name="phone"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="inputCategory" class="text-white"
+                    >Inquiry Type</label
+                  >
+                  <select
+                    class="form-control"
+                    id="inputCategory"
+                    name="category"
+                  >
+                    <option>General Inquiry</option>
+                    <option>Support</option>
+                    <option>Freelancer Help</option>
+                    <option>Client Assistance</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  Send Message
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Contact Information Section -->
+    <!-- Footer Section -->
+    <section class="bg-light mt-5 py-4">
       <div class="container text-center">
+        <div class="mb-3 footerabout">
+          <a href="/about" class="text-dark mx-3">About Us</a>
+          <a href="/contact" class="text-dark mx-3">Contact</a>
+        </div>
+        <div>
+          <a href="#"><i class="bi bi-twitter text-dark mx-1"></i></a>
+          <a href="#"><i class="bi bi-facebook text-dark mx-1"></i></a>
+          <a href="#"><i class="bi bi-linkedin text-dark mx-1"></i></a>
+          <a href="#"><i class="bi bi-instagram text-dark mx-1"></i></a>
+        </div>
+        <br />
+        <br />
         <p>&copy; 2024 Kenyan Freelancer Marketplace. All rights reserved.</p>
       </div>
-    </footer>
+    </section>
+    <!-- End Footer Section -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

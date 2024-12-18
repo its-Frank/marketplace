@@ -177,7 +177,17 @@ CREATE TABLE revision_requests (
   FOREIGN KEY (job_id) REFERENCES jobs(id),
   FOREIGN KEY (client_id) REFERENCES users(id)
 );
-
+-- contacts
+CREATE TABLE contacts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    category VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- updates
 ALTER TABLE jobs 

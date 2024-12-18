@@ -1,0 +1,96 @@
+<%- include('_header') %>
+<div class="container mt-4">
+  <h1>Create New Service (Admin)</h1>
+  <form
+    action="/admin/services/create"
+    method="POST"
+    enctype="multipart/form-data"
+    class="needs-validation"
+    novalidate
+  >
+    <div class="mb-3">
+      <label for="seller" class="form-label">Seller</label>
+      <select class="form-control" id="seller" name="seller" required>
+        <option value="">Select a Seller</option>
+        <% sellers.forEach(seller => { %>
+        <option value="<%= seller.id %>"><%= seller.name %></option>
+        <% }); %>
+      </select>
+      <div class="invalid-feedback">Please select a seller.</div>
+    </div>
+    <div class="mb-3">
+      <label for="title" class="form-label">Service Title</label>
+      <input
+        type="text"
+        class="form-control"
+        id="title"
+        name="title"
+        required
+      />
+      <div class="invalid-feedback">Please provide a title.</div>
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="4"
+        required
+      ></textarea>
+      <div class="invalid-feedback">Please provide a description.</div>
+    </div>
+    <div class="mb-3">
+      <label for="price" class="form-label">Price (KES)</label>
+      <input
+        type="number"
+        class="form-control"
+        id="price"
+        name="price"
+        min="0"
+        step="0.01"
+        required
+      />
+      <div class="invalid-feedback">Please provide a valid price.</div>
+    </div>
+    <div class="mb-3">
+      <label for="serviceImage" class="form-label">Service Image</label>
+      <input
+        type="file"
+        class="form-control"
+        id="serviceImage"
+        name="serviceImage"
+        accept="image/*"
+      />
+    </div>
+    <button type="submit" class="btn btn-primary">Create Service</button>
+  </form>
+</div>
+
+<script>
+  // Form validation script (same as in your previous create.ejs)
+  (function () {
+    "use strict";
+    window.addEventListener(
+      "load",
+      function () {
+        var forms = document.getElementsByClassName("needs-validation");
+        var validation = Array.prototype.filter.call(forms, function (form) {
+          form.addEventListener(
+            "submit",
+            function (event) {
+              if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+              form.classList.add("was-validated");
+            },
+            false
+          );
+        });
+      },
+      false
+    );
+  })();
+</script>
+<%- include('_footer') %>

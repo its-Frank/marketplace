@@ -1,0 +1,143 @@
+<%- include('_header') %>
+<!-- Contact Section -->
+<section
+  class="contact_section layout_padding py-5"
+  id="contactLink"
+  style="background-color: #05264a"
+>
+  <div class="container">
+    <% if (locals.success) { %>
+    <div class="alert alert-success text-center mb-4"><%= success %></div>
+    <% } %> <% if (locals.error) { %>
+    <div class="alert alert-danger text-center mb-4"><%= error %></div>
+    <% } %>
+
+    <div class="heading_container text-center mb-4">
+      <h2 class="text-white">Contact Kenyan Freelancer Marketplace</h2>
+      <p class="text-white-50">
+        We'd love to hear from you. Send us a message and we'll get back to you
+        soon.
+      </p>
+    </div>
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <form action="/contact" method="POST">
+          <div class="form-row">
+            <div class="form-group col-md-6 mb-3">
+              <label for="inputName4" class="text-white">Full Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="inputName4"
+                name="name"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+            <div class="form-group col-md-6 mb-3">
+              <label for="inputEmail4" class="text-white">Email Address</label>
+              <input
+                type="email"
+                class="form-control"
+                id="inputEmail4"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group mb-3">
+            <label for="inputSubject4" class="text-white">Subject</label>
+            <input
+              type="text"
+              class="form-control"
+              id="inputSubject4"
+              name="subject"
+              placeholder="Enter message subject"
+              required
+            />
+          </div>
+          <div class="form-group mb-3">
+            <label for="inputMessage" class="text-white">Your Message</label>
+            <textarea
+              class="form-control"
+              id="inputMessage"
+              name="message"
+              placeholder="Write your message here"
+              rows="5"
+              required
+            ></textarea>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="inputPhone" class="text-white">Phone Number </label>
+              <input
+                type="tel"
+                class="form-control"
+                id="inputPhone"
+                name="phone"
+                placeholder="Enter your phone number"
+              />
+            </div>
+            <div class="col-md-6">
+              <label for="inputCategory" class="text-white">Inquiry Type</label>
+              <select class="form-control" id="inputCategory" name="category">
+                <option>General Inquiry</option>
+                <option>Support</option>
+                <option>Freelancer Help</option>
+                <option>Client Assistance</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+              Send Message
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- Contact Information Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="row text-center">
+      <div class="col-md-4 mb-4">
+        <div class="p-4 border rounded">
+          <i
+            class="bi bi-envelope-fill text-primary mb-3"
+            style="font-size: 2.5rem"
+          ></i>
+          <h4>Email Us</h4>
+          <p>support@kenyanfreelancer.com</p>
+          <p>info@kenyanfreelancer.com</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="p-4 border rounded">
+          <i
+            class="bi bi-telephone-fill text-primary mb-3"
+            style="font-size: 2.5rem"
+          ></i>
+          <h4>Call Us</h4>
+          <p>+254 (0) 718 932 518</p>
+          <p>+254 (0) 795 928 330</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="p-4 border rounded">
+          <i
+            class="bi bi-geo-alt-fill text-primary mb-3"
+            style="font-size: 2.5rem"
+          ></i>
+          <h4>Our Location</h4>
+          <p>Nairobi, Kenya</p>
+          <p>Kenyan Freelancer Marketplace, Westlands</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<%- include('_footer') %>

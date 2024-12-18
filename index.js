@@ -811,7 +811,6 @@ app.get("/logout", (req, res) => {
     res.redirect("/");
   });
 });
-
 // Route to show message creation form
 app.get("/messages/create/:receiverId", isAuthenticated, (req, res) => {
   const receiverId = req.params.receiverId;
@@ -894,7 +893,6 @@ app.get("/messages/reply/:messageId", isAuthenticated, (req, res) => {
     });
   });
 });
-
 // Route to handle reply submission
 app.post("/messages/reply/:messageId", isAuthenticated, (req, res) => {
   const messageId = req.params.messageId;
@@ -926,7 +924,6 @@ app.post("/messages/reply/:messageId", isAuthenticated, (req, res) => {
     );
   });
 });
-
 // route to view messages
 app.get("/messages", isAuthenticated, (req, res) => {
   const query = `
@@ -957,7 +954,6 @@ app.get("/messages", isAuthenticated, (req, res) => {
     }
   );
 });
-
 // Route to show job invitation form
 app.get("/jobs/invite/:freelancerId", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
@@ -1484,7 +1480,6 @@ app.post("/jobs/:jobId/review", isAuthenticated, (req, res) => {
     }
   });
 });
-
 // Route to process payment
 app.post("/jobs/:jobId/payment", isAuthenticated, (req, res) => {
   if (req.session.userType !== "client") {
@@ -1635,7 +1630,6 @@ app.get("/jobs/:jobId/payment-form", isAuthenticated, (req, res) => {
     });
   });
 });
-
 // Admin dashboard route
 app.get("/admin/dashboard", isAuthenticated, isAdmin, (req, res) => {
   const queries = {
@@ -1701,19 +1695,12 @@ app.post(
           .json({ error: "Transaction start failed", details: err.message });
       }
       const deleteQueries = [
-        // Delete submission files first
         "DELETE FROM submission_files WHERE submission_id IN (SELECT id FROM work_submissions WHERE freelancer_id = ?)",
-        // Delete messages involving this user
         "DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?",
-        // Delete bids
         "DELETE FROM bids WHERE freelancer_id = ?",
-        // Delete jobs associated with this user as a client
         "DELETE FROM jobs WHERE client_id = ?",
-        // Delete work submissions
         "DELETE FROM work_submissions WHERE freelancer_id = ?",
-        // Delete services
         "DELETE FROM services WHERE seller_id = ?",
-        // Finally delete the user
         "DELETE FROM users WHERE id = ?",
       ];
       const executeDeleteQueries = (queries, index) => {
@@ -1819,7 +1806,128 @@ app.post("/admin/jobs/delete/:jobId", isAuthenticated, isAdmin, (req, res) => {
     executeDeleteQueries(deleteQueries, 0);
   });
 });
+// Route to show admin job creation page
+app.get("/admin/job/create", isAuthenticated, isAdmin, (req, res) => {
+  // Fetch list of clients to populate the client selection dropdown
+  connection.query(
+    "SELECT id, name FROM users WHERE user_type = 'client'",
+    (err, clients) => {
+      if (err) {
+        return res.status(500).json({ error: "Error fetching clients" });
+      }
+      res.render("admin-job-create", {
+        clients,
+        user: { id: req.session.userId },
+      });
+    }
+  );
+});
+// Route to handle admin job creation
+app.post(
+  "/admin/job/create",
+  isAuthenticated,
+  isAdmin,
+  upload.array("gig_images", 3),
+  (req, res) => {
+    try {
+      const {
+        client_id,
+        title,
+        description,
+        budget,
+        deadline,
+        basic_price,
+        basic_description,
+        basic_delivery,
+        basic_revisions,
+        standard_price,
+        standard_description,
+        standard_delivery,
+        standard_revisions,
+        premium_price,
+        premium_description,
+        premium_delivery,
+        premium_revisions,
+      } = req.body;
 
+      const query = `
+        INSERT INTO jobs (
+          client_id, title, description, budget, deadline,
+          basic_price, basic_description, basic_delivery, basic_revisions,
+          standard_price, standard_description, standard_delivery, standard_revisions,
+          premium_price, premium_description, premium_delivery, premium_revisions
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      connection.query(
+        query,
+        [
+          client_id,
+          title,
+          description,
+          budget,
+          deadline,
+          basic_price,
+          basic_description,
+          basic_delivery,
+          basic_revisions,
+          standard_price,
+          standard_description,
+          standard_delivery,
+          standard_revisions,
+          premium_price,
+          premium_description,
+          premium_delivery,
+          premium_revisions,
+        ],
+        (err, result) => {
+          if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Error creating job" });
+          }
+          // Handle image uploads
+          const jobId = result.insertId;
+          if (req.files && req.files.length > 0) {
+            const imagePromises = req.files.map((file) => {
+              return new Promise((resolve, reject) => {
+                const imageQuery =
+                  "INSERT INTO job_images (job_id, image_path) VALUES (?, ?)";
+                const imagePath = "/uploads/gig_images/" + file.filename;
+                connection.query(
+                  imageQuery,
+                  [jobId, imagePath],
+                  (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                  }
+                );
+              });
+            });
+            Promise.all(imagePromises)
+              .then(() => {
+                req.session.successMessage =
+                  "Job created successfully with images!";
+                res.redirect("/admin/jobs");
+              })
+              .catch((err) => {
+                console.error("Error saving image paths:", err);
+                req.session.successMessage =
+                  "Job created but there was an error saving images.";
+                res.redirect("/admin/jobs");
+              });
+          } else {
+            req.session.successMessage = "Job created successfully!";
+            res.redirect("/admin/jobs");
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error in job creation:", error);
+      res
+        .status(500)
+        .json({ error: "An error occurred while creating the job" });
+    }
+  }
+);
 // Route to manage services
 app.get("/admin/services", isAuthenticated, isAdmin, (req, res) => {
   const servicesQuery = `
@@ -1915,39 +2023,83 @@ app.post(
     });
   }
 );
-// Route to add a new service
-app.post(
-  "/admin/services/create",
-  isAuthenticated,
-  isAdmin,
-  upload.single("serviceImage"),
-  (req, res) => {
-    const { title, description, price, seller_id } = req.body;
-    const newService = {
-      title,
-      description,
-      price,
-      seller_id,
-      created_at: new Date(),
-    };
-    if (req.file) {
-      newService.image_path = `/uploads/services/${req.file.filename}`;
+// Admin route to render service creation page
+app.get("/admin/services/create", isAuthenticated, isAdmin, (req, res) => {
+  connection.query(
+    'SELECT id, name FROM users WHERE user_type = "freelancer"',
+    (err, sellers) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Server error");
+      }
+      res.render("admin-services-create", {
+        sellers,
+        user: { id: req.session.userId },
+      });
     }
+  );
+});
+// Admin route to handle service creation
+app.post("/admin/services/create", isAuthenticated, isAdmin, (req, res) => {
+  upload.single("serviceImage")(req, res, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(400).send("Error uploading file");
+    }
+    const { title, description, price, seller } = req.body;
+    const image_path = req.file
+      ? `/uploads/services/${req.file.filename}`
+      : null;
     connection.query(
-      "INSERT INTO services SET ?",
-      newService,
-      (err, result) => {
-        if (err) {
-          console.error("Error adding service:", err);
-          req.session.errorMessage = "Failed to add service";
-          return res.redirect("/admin/services");
+      `
+      INSERT INTO services (seller_id, title, description, price, image_path)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [seller, title, description, price, image_path],
+      (error) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).send("Server error");
         }
-        req.session.successMessage = "Service added successfully";
         res.redirect("/admin/services");
       }
     );
-  }
-);
+  });
+});
+//contact route
+app.get("/contact", (req, res) => {
+  res.render("contact", { user: req.user || null });
+});
+//contact post
+app.post("/contact", (req, res) => {
+  const { name, email, phone, subject, message, category } = req.body;
+  const query =
+    "INSERT INTO contacts (name, email, phone, subject, message, category) VALUES (?, ?, ?, ?, ?, ?)";
+  connection.query(
+    query,
+    [name, email, phone, subject, message, category],
+    (err, result) => {
+      if (err) {
+        console.error("Error inserting contact:", err);
+        return res.render("contact", {
+          user: req.user || null,
+          error:
+            "There was an error submitting your message. Please try again.",
+        });
+      }
+      // Successful submission
+      res.render("contact", {
+        user: req.user || null,
+        success:
+          "Your message has been sent successfully. We will get in touch with you shortly!",
+      });
+    }
+  );
+});
+//about route
+app.get("/about", (req, res) => {
+  res.render("about", { user: req.user || null });
+});
 
 //error
 // app.get("*", (req, res) => {
