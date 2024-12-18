@@ -588,7 +588,8 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
       const completedJobsQuery = `
         SELECT j.*,
                p.status as payment_status,
-               ws.submission_text as submission_description
+               ws.submission_text as submission_description,
+               users.name as freelancer_name
         FROM jobs j
         LEFT JOIN payments p ON j.id = p.job_id
         LEFT JOIN work_submissions ws ON j.id = ws.job_id
@@ -675,8 +676,6 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
                       .status(500)
                       .json({ error: "Error fetching completed jobs" });
                   }
-                  console.log(completedJobs);
-
                   res.render("clientdashboard", {
                     user,
                     activeJobs,
@@ -697,6 +696,7 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
                   .status(500)
                   .json({ error: "Error fetching completed jobs" });
               }
+              console.log(completedJobs);
               res.render("clientdashboard", {
                 user,
                 activeJobs,
