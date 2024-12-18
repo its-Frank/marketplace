@@ -592,6 +592,7 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
         FROM jobs j
         LEFT JOIN payments p ON j.id = p.job_id
         LEFT JOIN work_submissions ws ON j.id = ws.job_id
+        JOIN users ON ws.freelancer_id = users.id
         WHERE j.client_id = ?
         AND j.status = 'completed'
       `;
@@ -674,6 +675,8 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
                       .status(500)
                       .json({ error: "Error fetching completed jobs" });
                   }
+                  console.log(completedJobs);
+
                   res.render("clientdashboard", {
                     user,
                     activeJobs,
@@ -707,7 +710,6 @@ app.get("/dashboard", isAuthenticated, (req, res) => {
     }
   });
 });
-
 //edit profile for client
 app.get("/client/edit-profile", isAuthenticated, (req, res) => {
   const query = "SELECT * FROM users WHERE id = ?";
