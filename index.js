@@ -4,9 +4,7 @@ const session = require("express-session");
 const mysql = require("mysql");
 const multer = require("multer");
 const bcrypt = require("bcrypt");
-
 const app = express();
-
 // Database connection
 const connection = mysql.createConnection({
   host: "localhost",
@@ -22,11 +20,9 @@ connection.connect((err) => {
   }
   console.log("Connected to MySQL database");
 });
-
 // View engine setup
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-
 // Middleware
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
@@ -38,7 +34,6 @@ app.use(
     saveUninitialized: true,
   })
 );
-
 // Middleware to check if user is logged in
 const isAuthenticated = (req, res, next) => {
   if (req.session.userId) {
@@ -2104,9 +2099,11 @@ app.get("/about", (req, res) => {
 });
 
 //error
-// app.get("*", (req, res) => {
-//   res.render("error");
-// });
+app.get("*", (req, res) => {
+  res.render("error", {
+    user: req.user || null,
+  });
+});
 
 const PORT = 5000;
 app.listen(PORT, () => {

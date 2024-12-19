@@ -28,6 +28,61 @@
         max-width: 450px;
         height: auto;
       }
+      /* Large screens (default) */
+      @media (min-width: 992px) {
+        .hero {
+          height: 100vh;
+        }
+      }
+      /* Medium screens */
+      @media (min-width: 768px) and (max-width: 991px) {
+        .hero {
+          height: 70vh;
+        }
+      }
+      /* Small screens */
+      @media (max-width: 767px) {
+        .hero {
+          height: 50vh;
+        }
+      }
+      /* About section responsive styles */
+      .custom-about-image {
+        max-width: 100%;
+        height: auto;
+      }
+      /* Large screens */
+      @media (min-width: 992px) {
+        .custom-about-image {
+          max-width: 450px;
+        }
+      }
+      /* Medium screens */
+      @media (min-width: 768px) and (max-width: 991px) {
+        .custom-about-image {
+          max-width: 350px;
+        }
+      }
+      /* Small screens */
+      @media (max-width: 767px) {
+        .custom-about-image {
+          max-width: 280px;
+          margin: 0 auto;
+          display: block;
+        }
+      }
+      @media (max-width: 767px) {
+        .hero .display-4 {
+          font-size: 2rem;
+        }
+        .hero .lead {
+          font-size: 1rem;
+        }
+        .about_section .row {
+          margin-top: 2rem;
+        }
+      }
+
       .small-image {
         max-width: 150px;
         height: auto;
@@ -212,7 +267,7 @@
                   As the co-founder of Kenyan Freelancer Marketplace, Frank is
                   dedicated to empowering freelancers and ensuring client
                   satisfaction. With a background in project management and
-                  years of experience in the freelancing industry, Yokit focuses
+                  years of experience in the freelancing industry, Frank focuses
                   on fostering strong relationships between clients and
                   freelancers.
                 </p>
@@ -245,10 +300,11 @@
                 <h5 class="font-weight-bold">Morde Den</h5>
                 <p>
                   Morde brings a wealth of expertise in digital marketing to
-                  [Your Platform Name]. His passion for helping freelancers
-                  shine online is evident in every initiative he spearheads.
-                  Morde is committed to ensuring that both freelancers and
-                  clients have access to the resources they need to succeed.
+                  Kenyan Freelancer Marketplace. His passion for helping
+                  freelancers shine online is evident in every initiative he
+                  spearheads. Morde is committed to ensuring that both
+                  freelancers and clients have access to the resources they need
+                  to succeed.
                 </p>
                 <div class="social_box">
                   <a href="#"><img src="/images/fb.png" alt="Facebook" /></a>
@@ -271,18 +327,19 @@
               <div class="img-box mb-3">
                 <img
                   src="/images/t-3.png"
-                  alt="Marry Doki"
+                  alt="Yvonne Maina"
                   class="img-fluid rounded-circle"
                 />
               </div>
               <div class="detail-box">
-                <h5 class="font-weight-bold">Marry Doki</h5>
+                <h5 class="font-weight-bold">Yvonne Maina</h5>
                 <p>
-                  Marry is our community manager who is passionate about
+                  Yvonne is our community manager who is passionate about
                   building a supportive environment for all freelancers. With a
                   focus on user engagement and satisfaction, she works
-                  tirelessly to enhance the experience on [Your Platform Name],
-                  making it the go-to place for freelancers and clients alike.
+                  tirelessly to enhance the experience on Kenyan Freelancer
+                  Marketplace, making it the go-to place for freelancers and
+                  clients alike.
                 </p>
                 <div class="social_box">
                   <a href="#"><img src="/images/fb.png" alt="Facebook" /></a>
@@ -408,13 +465,9 @@
               data-bs-parent="#questions"
             >
               <div class="accordion-body">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                beatae fuga animi distinctio perspiciatis adipisci velit maiores
-                totam tempora accusamus modi explicabo accusantium consequatur,
-                praesentium rem quisquam molestias at quos vero. Officiis ad
-                velit doloremque at. Dignissimos praesentium necessitatibus
-                natus corrupti cum consequatur aliquam! Minima molestias iure
-                quam distinctio velit.
+                Kenyan Freelancer Marketplace operates entirely online,
+                connecting clients and freelancers across Kenya. Our support
+                team is based in Nairobi, Kenya.
               </div>
             </div>
           </div>
@@ -427,7 +480,8 @@
                 data-bs-toggle="collapse"
                 data-bs-target="#question-two"
               >
-                How much do I get a trustworthy freelancer for my project?
+                How much do I pay to get a trustworthy freelancer for my
+                project?
               </button>
             </h2>
             <div
@@ -436,13 +490,10 @@
               data-bs-parent="#questions"
             >
               <div class="accordion-body">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                beatae fuga animi distinctio perspiciatis adipisci velit maiores
-                totam tempora accusamus modi explicabo accusantium consequatur,
-                praesentium rem quisquam molestias at quos vero. Officiis ad
-                velit doloremque at. Dignissimos praesentium necessitatibus
-                natus corrupti cum consequatur aliquam! Minima molestias iure
-                quam distinctio velit.
+                Our platform is free to use for browsing freelancers. Once you
+                hire a freelancer, the cost depends on the agreement between you
+                and the freelancer. Kenyan Freelancer Marketplace does not
+                charge any additional fees.
               </div>
             </div>
           </div>
@@ -464,13 +515,9 @@
               data-bs-parent="#questions"
             >
               <div class="accordion-body">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                beatae fuga animi distinctio perspiciatis adipisci velit maiores
-                totam tempora accusamus modi explicabo accusantium consequatur,
-                praesentium rem quisquam molestias at quos vero. Officiis ad
-                velit doloremque at. Dignissimos praesentium necessitatibus
-                natus corrupti cum consequatur aliquam! Minima molestias iure
-                quam distinctio velit.
+                To get started as a freelancer, you need to create an account on
+                our platform, complete your profile with your skills and
+                experience, and start bidding on jobs that match your expertise.
               </div>
             </div>
           </div>
@@ -483,7 +530,7 @@
                 data-bs-toggle="collapse"
                 data-bs-target="#question-four"
               >
-                How Do I sign up?
+                How do I sign up?
               </button>
             </h2>
             <div
@@ -492,13 +539,9 @@
               data-bs-parent="#questions"
             >
               <div class="accordion-body">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                beatae fuga animi distinctio perspiciatis adipisci velit maiores
-                totam tempora accusamus modi explicabo accusantium consequatur,
-                praesentium rem quisquam molestias at quos vero. Officiis ad
-                velit doloremque at. Dignissimos praesentium necessitatibus
-                natus corrupti cum consequatur aliquam! Minima molestias iure
-                quam distinctio velit.
+                Signing up is easy! Click on the "Register" button in the
+                navigation menu, fill out your details, and verify your email to
+                get started.
               </div>
             </div>
           </div>
@@ -520,19 +563,16 @@
               data-bs-parent="#questions"
             >
               <div class="accordion-body">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                beatae fuga animi distinctio perspiciatis adipisci velit maiores
-                totam tempora accusamus modi explicabo accusantium consequatur,
-                praesentium rem quisquam molestias at quos vero. Officiis ad
-                velit doloremque at. Dignissimos praesentium necessitatibus
-                natus corrupti cum consequatur aliquam! Minima molestias iure
-                quam distinctio velit.
+                Payments are made directly by the client to the freelancer. We
+                recommend using secure payment methods such as mobile money
+                (M-Pesa) or bank transfers for transactions.
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+    <!-- end of question accordion -->
     <!-- Contact Section -->
     <section
       class="contact_section layout_padding py-5"
